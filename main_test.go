@@ -67,7 +67,10 @@ func TestCLIHelpText(t *testing.T) {
 	const expectedLong = `A validator for DP-1 playlists and capsules that can verify:
 - Ed25519 signatures on playlists
 - SHA256 asset integrity in capsules
-- Structural compliance with DP-1 specification`
+- Structural compliance with DP-1 specification
+
+Note: current signature verification in this tool validates legacy DP-1 single signatures
+using top-level "signature" (ed25519:<hex>).`
 	if rootCmd.Long != expectedLong {
 		t.Errorf("rootCmd should have long description: %s", rootCmd.Long)
 	}
@@ -78,6 +81,7 @@ func TestCLIHelpText(t *testing.T) {
 		"optionally verify its Ed25519 signature",
 		"Structure only:",
 		"With signature verification:",
+		"top-level \"signature\"",
 	}
 
 	for _, content := range expectedPlaylistContent {
@@ -841,16 +845,9 @@ func TestValidateCapsuleComprehensive(t *testing.T) {
 			hashesInput = ""
 
 			err := validateCapsule(&cobra.Command{}, []string{})
-			// NOTE: This currently fails because playlist hashes include "0x" prefix
-			// but file verification expects raw hashes. This is a known limitation
-			// of the current implementation.
-			if err == nil {
-				t.Error("Unexpected success - playlist hashes currently don't work due to 0x prefix mismatch")
+			if err != nil {
+				t.Errorf("Expected success with playlist hashes but got error: %v", err)
 			}
-			if !strings.Contains(err.Error(), "capsule verification failed") {
-				t.Errorf("Expected capsule verification failure due to hash format mismatch, got: %v", err)
-			}
-			t.Logf("Expected behavior: playlist hashes with 0x prefix don't match raw file hashes: %v", err)
 		})
 	})
 }

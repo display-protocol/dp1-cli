@@ -15,7 +15,10 @@ var rootCmd = &cobra.Command{
 	Long: `A validator for DP-1 playlists and capsules that can verify:
 - Ed25519 signatures on playlists
 - SHA256 asset integrity in capsules
-- Structural compliance with DP-1 specification`,
+- Structural compliance with DP-1 specification
+
+Note: current signature verification in this tool validates legacy DP-1 single signatures
+using top-level "signature" (ed25519:<hex>).`,
 }
 
 var playlistCmd = &cobra.Command{
@@ -26,7 +29,9 @@ The playlist can be provided as a URL or base64 encoded payload.
 
 Usage modes:
 1. Structure only: --playlist <input> (validates playlist format without signature verification)
-2. With signature verification: --playlist <input> --pubkey <hex> (validates structure and verifies signature)`,
+2. With signature verification: --playlist <input> --pubkey <hex> (validates structure and verifies legacy top-level signature)
+
+Note: --pubkey verification currently applies to top-level "signature" (v1.0.x style).`,
 	RunE: validatePlaylist,
 }
 
@@ -110,6 +115,10 @@ func validatePlaylist(cmd *cobra.Command, args []string) error {
 	// Check if signature exists
 	if !hasSignature {
 		fmt.Printf("⚠️  Playlist does not contain a signature\n")
+		if pubkeyHex != "" {
+			fmt.Printf("⚠️  --pubkey was provided, but this tool only verifies top-level legacy signatures\n")
+			fmt.Printf("   - If your playlist only uses a v1.1.0 signatures[] chain, verification is not performed by this command\n")
+		}
 	} else {
 		signature := *p.Signature
 

@@ -228,10 +228,16 @@ func CompareHashLists(expected, actual []string) (matched, missing, extra []stri
 
 	// Build maps for efficient lookup
 	for _, hash := range expected {
-		expectedMap[strings.ToLower(hash)] = true
+		normalized := normalizeHash(hash)
+		if normalized != "" {
+			expectedMap[normalized] = true
+		}
 	}
 	for _, hash := range actual {
-		actualMap[strings.ToLower(hash)] = true
+		normalized := normalizeHash(hash)
+		if normalized != "" {
+			actualMap[normalized] = true
+		}
 	}
 
 	// Find matches and missing hashes
@@ -255,6 +261,13 @@ func CompareHashLists(expected, actual []string) (matched, missing, extra []stri
 	sort.Strings(extra)
 
 	return matched, missing, extra
+}
+
+func normalizeHash(hash string) string {
+	normalized := strings.TrimSpace(strings.ToLower(hash))
+	normalized = strings.TrimPrefix(normalized, "0x")
+	normalized = strings.TrimPrefix(normalized, "sha256:")
+	return normalized
 }
 
 // HashString computes SHA256 hash of a string
