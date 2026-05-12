@@ -1,0 +1,27 @@
+# https://github.com/github/gitignore/blob/main/Go.gitignore
+
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+dp1
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool
+*.out
+coverage.txt
+coverage.html
+
+# Dependency directories (remove the comment below if you use vendoring)
+# vendor/
+
+# Go workspace file
+go.work
+go.work.sum
+
+# OS
+.DS_Store
