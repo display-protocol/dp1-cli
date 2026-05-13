@@ -1,0 +1,43 @@
+---
+description: Core architecture and package-boundary constraints for dp1-cli
+globs:
+  - "**/*.go"
+  - "**/*_test.go"
+  - "AGENTS.md"
+  - "docs/**"
+alwaysApply: true
+---
+
+# Core architecture rule
+
+Use this rule for structural decisions and package boundaries in **dp1-cli** (Cobra CLI, not an HTTP server).
+
+## Non-negotiable constraints
+
+- Prefer deleting or replacing weak designs over layering on local fixes.
+- Do not add compatibility shims or speculative abstractions unless explicitly requested.
+- Prefer small, cohesive, testable packages.
+- Keep side effects explicit and localized (filesystem, HTTP, stdin/stdout).
+- For non-obvious logic, add comments that preserve intent, invariants, trade-offs, failure modes, and interop with DP-1 / dp1-go.
+
+## Boundary posture
+
+- **`cmd`:** Parses flags and wires I/O; call `internal/*` and dp1-go. No duplicated protocol rules (JCS, payload hash, schema fields) that belong in **dp1-go**.
+- **`internal/*`:** Owns CLI-specific orchestration—config paths, feed HTTP client, input sources, `--json` shapes, signing helpers that **call** dp1-go.
+- **dp1-go:** Normative for validation, canonical signing, and verification semantics.
+
+Keep package APIs narrow. Avoid circular imports and grab-bag utilities.
+
+## Canonical sources
+
+- **System architecture:** `docs/architecture.md` (mirrored in `.cursor/rules/20-architecture.mdc`). Update the doc when package layout or dependency direction changes.
+- **CLI contract:** `docs/cli_design.md` (mirrored in `.cursor/rules/21-cli-design.mdc`). User-visible commands, flags, env vars, and JSON output must stay aligned with that document.
+- **Go style:** `docs/go_coding_standards.md` (summarized in `.cursor/rules/10-go-coding-standards.mdc`).
+
+There is no in-repo OpenAPI; remote feed behavior is defined by the target server.
+
+## Completion checks
+
+- Boundaries are clearer after the change, not muddier.
+- Non-obvious behavior is documented in code or `docs/` where future agents would otherwise reverse-engineer it.
+- No new hidden global state or hard-to-test coupling without an explicit justification.

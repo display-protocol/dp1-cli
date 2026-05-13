@@ -1,0 +1,48 @@
+---
+description: Go coding and readability standards for dp1-cli
+globs:
+  - "**/*.go"
+  - "**/*_test.go"
+alwaysApply: true
+---
+
+# Go coding standards
+
+Follow `docs/go_coding_standards.md`, Effective Go, and Go Code Review Comments.
+
+## Readability first
+
+- Prefer straightforward Go over clever tricks.
+- Keep functions focused and responsibilities narrow.
+- Choose names that match Go conventions and reveal intent.
+- Keep exported APIs in `internal/*` minimal and purposeful.
+
+## Error handling
+
+- Check errors explicitly.
+- Wrap errors with actionable context using `%w`.
+- Do not log-and-return the same error unless there is a clear ownership reason.
+- Do not silently swallow errors.
+
+## Package and API design
+
+- Use interfaces at consumption boundaries, not preemptively.
+- Avoid broad utility packages that hide ownership.
+- Keep constructors explicit about required dependencies.
+- Favor immutable inputs and explicit return values where practical.
+
+## Concurrency
+
+- Treat goroutines, channels, locks, and shared state as high-risk areas (this repo uses little concurrency; keep it that way unless justified).
+- Document cancellation and ownership when adding background work.
+- Prefer `context.Context` on I/O (e.g. `internal/feed`, `internal/input` HTTP fetch).
+
+## Testing
+
+- Prefer table-driven tests when they improve clarity.
+- Test behavior and contracts, not implementation trivia.
+- Cover edge cases, failure paths, and concurrency-sensitive behavior when present.
+
+## Formatting and lint
+
+- Code must pass `gofmt`, `go vet`, and `golangci-lint` (see `Makefile` and CI).

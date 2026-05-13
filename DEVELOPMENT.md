@@ -2,6 +2,8 @@
 
 This document is for people working on dp1-cli itself: layout, tooling, and how to verify changes.
 
+**Coding agents:** see [AGENTS.md](AGENTS.md), [`.cursor/rules/`](.cursor/rules/), [`.cursor/agents/reviewer.md`](.cursor/agents/reviewer.md), and [`prompts/code-review.md`](prompts/code-review.md).
+
 ## Prerequisites
 
 - Go **1.24** or newer (`go version`)
