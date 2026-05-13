@@ -1,6 +1,7 @@
 package output
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -31,6 +32,15 @@ type ErrorReport struct {
 	Resource string `json:"resource,omitempty"`
 	Command  string `json:"command,omitempty"`
 	Error    string `json:"error"`
+}
+
+// PublishOK is emitted after a successful POST to the feed API.
+type PublishOK struct {
+	OK         bool            `json:"ok"`
+	Resource   string          `json:"resource"`
+	Feed       string          `json:"feed"`
+	StatusCode int             `json:"statusCode"`
+	Response   json.RawMessage `json:"response,omitempty"`
 }
 
 func PrintValidateSuccess(jsonOut bool, v ValidateOK) {
@@ -66,6 +76,25 @@ func PrintVerifySuccess(jsonOut bool, v VerifyOK) {
 	if v.Message != "" {
 		fmt.Fprintf(os.Stdout, "  %s\n", v.Message)
 	}
+}
+
+func PrintPublishSuccess(jsonOut bool, p PublishOK) {
+	if jsonOut {
+		p.OK = true
+		emitJSON(p)
+		return
+	}
+	green := color.New(color.FgGreen).SprintFunc()
+	_, _ = fmt.Fprintf(os.Stdout, "%s Published %s to %s (HTTP %d)\n", green("✓"), p.Resource, p.Feed, p.StatusCode)
+	if len(p.Response) == 0 {
+		return
+	}
+	var buf bytes.Buffer
+	if err := json.Indent(&buf, p.Response, "", "  "); err == nil {
+		_, _ = fmt.Fprintf(os.Stdout, "%s\n", buf.String())
+		return
+	}
+	_, _ = fmt.Fprintf(os.Stdout, "%s\n", string(p.Response))
 }
 
 func PrintError(jsonOut bool, rep ErrorReport) {

@@ -21,3 +21,11 @@ func TestGroup_createSignSurface(t *testing.T) {
 		t.Fatal("expected --role on group sign")
 	}
 }
+
+func TestChannel_publish_registered(t *testing.T) {
+	_ = mustFindCmd(t, cmd.Root, "channel", "publish")
+}
+
+func TestGroup_publish_registered(t *testing.T) {
+	_ = mustFindCmd(t, cmd.Root, "group", "publish")
+}

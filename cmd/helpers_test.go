@@ -56,6 +56,15 @@ func resetCLIState(t *testing.T) {
 		}
 		_ = c.Flags().Set("pubkey", "")
 	}
+	for _, path := range [][]string{{"playlist", "publish"}, {"channel", "publish"}, {"group", "publish"}} {
+		c := lookupCmd(root, path...)
+		if c == nil {
+			continue
+		}
+		fl := c.Flags()
+		_ = fl.Set("feed-url", "")
+		_ = fl.Set("api-key", "")
+	}
 }
 
 func childNames(parent *cobra.Command) []string {

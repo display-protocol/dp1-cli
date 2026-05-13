@@ -7,6 +7,8 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"io"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"testing"
@@ -189,5 +191,66 @@ func TestExecute_playlistSign_missingPrivateKeyErrors(t *testing.T) {
 	})
 	if err := root.Execute(); err == nil {
 		t.Fatal("expected missing key error")
+	}
+}
+
+func TestExecute_playlistPublish_postsToFeed(t *testing.T) {
+	var gotPath, gotAuth string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotPath = r.URL.Path
+		gotAuth = r.Header.Get("Authorization")
+		if r.Header.Get("Content-Type") != "application/json" {
+			t.Errorf("Content-Type: %q", r.Header.Get("Content-Type"))
+		}
+		b, err := io.ReadAll(r.Body)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := dp1.ParseAndValidatePlaylist(b); err != nil {
+			t.Fatal(err)
+		}
+		w.WriteHeader(http.StatusCreated)
+		_, _ = w.Write([]byte(`{"id":"feed-ok"}`))
+	}))
+	t.Cleanup(srv.Close)
+
+	dir := t.TempDir()
+	raw := []byte(`{"dpVersion":"1.1.0","title":"pub-e2e","items":[{"source":"https://example.invalid/i.json"}]}`)
+	inPath := filepath.Join(dir, "in.json")
+	outPath := filepath.Join(dir, "out.json")
+	if err := os.WriteFile(inPath, raw, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	_, priv, err := ed25519.GenerateKey(rand.Reader)
+	if err != nil {
+		t.Fatal(err)
+	}
+	keyHex := hex.EncodeToString(priv)
+
+	t.Setenv("HOME", t.TempDir())
+	defer resetCLIState(t)
+	root := cmd.Root
+	root.SetOut(io.Discard)
+	root.SetErr(io.Discard)
+	t.Cleanup(func() {
+		root.SetArgs(nil)
+		resetCLIState(t)
+	})
+
+	root.SetArgs([]string{"playlist", "sign", inPath, "--private-key", keyHex, "-o", outPath})
+	if err := root.Execute(); err != nil {
+		t.Fatal(err)
+	}
+
+	root.SetOut(io.Discard)
+	root.SetArgs([]string{"--json", "playlist", "publish", outPath, "--feed-url", srv.URL, "--api-key", "k"})
+	if err := root.Execute(); err != nil {
+		t.Fatal(err)
+	}
+	if gotPath != "/api/v1/playlists" {
+		t.Fatalf("request path: %s", gotPath)
+	}
+	if gotAuth != "Bearer k" {
+		t.Fatalf("Authorization: %q", gotAuth)
 	}
 }

@@ -57,3 +57,22 @@ func TestPlaylist_createAndSign_registered(t *testing.T) {
 		t.Fatal("expected sign flags role and private-key")
 	}
 }
+
+func TestPlaylist_publishRequiresOneSourceArg(t *testing.T) {
+	assertExecuteFails(t, []string{"playlist", "publish"})
+	assertExecuteFails(t, []string{"playlist", "publish", "a", "b"})
+}
+
+func TestPlaylist_publish_registersWithFlags(t *testing.T) {
+	c := mustFindCmd(t, cmd.Root, "playlist", "publish")
+	if c.Args == nil {
+		t.Fatal("expected Args validator on playlist publish")
+	}
+	if !strings.Contains(c.Use, "<source>") {
+		t.Fatalf("should document <source>: %q", c.Use)
+	}
+	fl := c.Flags()
+	if fl.Lookup("feed-url") == nil || fl.Lookup("api-key") == nil {
+		t.Fatal("expected feed-url and api-key flags")
+	}
+}
