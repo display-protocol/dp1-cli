@@ -49,3 +49,11 @@ func TestPlaylist_validate_hasNoPubkeyFlag(t *testing.T) {
 		t.Fatal("playlist validate should not define local --pubkey")
 	}
 }
+
+func TestPlaylist_createAndSign_registered(t *testing.T) {
+	_ = mustFindCmd(t, cmd.Root, "playlist", "create")
+	s := mustFindCmd(t, cmd.Root, "playlist", "sign")
+	if s.Flag("role") == nil || s.Flag("private-key") == nil {
+		t.Fatal("expected sign flags role and private-key")
+	}
+}

@@ -6,7 +6,10 @@
 *.dll
 *.so
 *.dylib
-dp1
+
+# Built CLI binary: go build -o dp1 .
+/dp1
+/dp1-cli
 
 # Test binary, built with `go test -c`
 *.test

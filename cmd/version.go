@@ -3,7 +3,6 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
-	"os"
 	"runtime"
 	"runtime/debug"
 	"strings"
@@ -20,8 +19,9 @@ var versionCmd = &cobra.Command{
 func runVersion(cmd *cobra.Command, args []string) error {
 	cli := moduleVersion("github.com/display-protocol/dp1-cli")
 	lib := moduleVersion("github.com/display-protocol/dp1-go")
+	out := cmd.OutOrStdout()
 	if jsonOut {
-		enc := json.NewEncoder(os.Stdout)
+		enc := json.NewEncoder(out)
 		enc.SetIndent("", "  ")
 		return enc.Encode(map[string]string{
 			"dp1_cli": cli,
@@ -29,9 +29,9 @@ func runVersion(cmd *cobra.Command, args []string) error {
 			"go":      runtime.Version(),
 		})
 	}
-	fmt.Printf("dp1-cli %s\n", cli)
-	fmt.Printf("dp1-go library %s\n", lib)
-	fmt.Printf("%s\n", runtime.Version())
+	fmt.Fprintf(out, "dp1-cli %s\n", cli)
+	fmt.Fprintf(out, "dp1-go library %s\n", lib)
+	fmt.Fprintf(out, "%s\n", runtime.Version())
 	return nil
 }
 

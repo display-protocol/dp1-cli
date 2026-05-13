@@ -26,4 +26,7 @@ func init() {
 	Root.AddCommand(playlistCmd)
 	Root.AddCommand(channelCmd)
 	Root.AddCommand(groupCmd)
+	Root.AddCommand(configCmd)
+	Root.AddCommand(keyCmd)
+	Root.AddCommand(initSetupCmd)
 }
