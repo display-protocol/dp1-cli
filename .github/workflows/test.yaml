@@ -1,0 +1,74 @@
+name: Tests
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - "**/*.go"
+      - "*.go"
+      - "go.mod"
+      - "go.sum"
+      - ".github/workflows/test.yaml"
+  pull_request:
+    branches:
+      - main
+      - develop
+    paths:
+      - "**/*.go"
+      - "*.go"
+      - "go.mod"
+      - "go.sum"
+      - ".github/workflows/test.yaml"
+
+permissions:
+  contents: read
+
+jobs:
+  unit-test:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Verify dependencies
+        run: go mod verify
+
+      - name: Run tests with coverage
+        run: |
+          go test -v -race -count=1 -timeout=5m \
+            -coverprofile=coverage.out \
+            -covermode=atomic \
+            ./...
+
+      - name: Display coverage summary
+        run: go tool cover -func=coverage.out | tail -25
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage.out
+          retention-days: 7
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file: ./coverage.out
+          flags: tests
+          fail_ci_if_error: false
+        continue-on-error: true

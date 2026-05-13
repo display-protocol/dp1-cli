@@ -31,9 +31,9 @@ type DefaultsCfg struct {
 }
 
 var cached struct {
-	cfg  Config
-	ok   bool
-	mu   sync.Mutex
+	cfg Config
+	ok  bool
+	mu  sync.Mutex
 }
 
 // Dir returns ~/.dp1 (created if missing when ensure is true).

@@ -23,11 +23,11 @@ import (
 var playlistVerifyPubkey string
 
 var (
-	playlistCreateOut      string
-	playlistSignPriv     string
-	playlistSignRole     string
-	playlistSignTS       string
-	playlistSignOutput   string
+	playlistCreateOut  string
+	playlistSignPriv   string
+	playlistSignRole   string
+	playlistSignTS     string
+	playlistSignOutput string
 )
 
 var playlistCmd = &cobra.Command{

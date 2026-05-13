@@ -1,0 +1,24 @@
+# Local allowlist (CI: .github/workflows/gitleaks.yaml).
+# Extends upstream defaults; add regex allowlists for docs and test placeholders only.
+
+title = "dp1-cli gitleaks"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Dev and documentation placeholders (not production secrets)"
+regexes = [
+	'''^your-api-key$''',
+	'''^0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef$''',
+]
+
+[[rules]]
+id = "generic-api-key"
+
+[[rules.allowlists]]
+description = "Lines containing did:key — public DIDs, not API keys"
+regexTarget = "line"
+regexes = [
+	'''did:key:''',
+]

@@ -23,11 +23,11 @@ import (
 var channelVerifyPubkey string
 
 var (
-	channelCreateOut    string
-	channelSignPriv     string
-	channelSignRole     string
-	channelSignTS       string
-	channelSignOutput   string
+	channelCreateOut  string
+	channelSignPriv   string
+	channelSignRole   string
+	channelSignTS     string
+	channelSignOutput string
 )
 
 var channelCmd = &cobra.Command{

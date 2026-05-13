@@ -39,7 +39,7 @@ func writeJSONDocument(dest string, v any, perm os.FileMode) error {
 
 func writeRawDocument(cmd *cobra.Command, dest string, data []byte) error {
 	out := cmd.OutOrStdout()
-	if !(dest == "" || dest == "-") {
+	if dest != "" && dest != "-" {
 		return os.WriteFile(dest, data, 0o644)
 	}
 	_, err := out.Write(data)

@@ -23,11 +23,11 @@ import (
 var groupVerifyPubkey string
 
 var (
-	groupCreateOut    string
-	groupSignPriv     string
-	groupSignRole     string
-	groupSignTS       string
-	groupSignOutput   string
+	groupCreateOut  string
+	groupSignPriv   string
+	groupSignRole   string
+	groupSignTS     string
+	groupSignOutput string
 )
 
 var groupCmd = &cobra.Command{

@@ -26,5 +26,9 @@ coverage.html
 go.work
 go.work.sum
 
+# Local smoke-test playlists
+playlist.json
+playlist.signed.json
+
 # OS
 .DS_Store

@@ -1,0 +1,55 @@
+version: "2"
+
+run:
+  go: "1.24"
+  timeout: 10m
+  concurrency: 4
+
+formatters:
+  enable:
+    - goimports
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/display-protocol/dp1-cli
+
+linters:
+  default: none
+  enable:
+    - govet
+    - staticcheck
+    - errcheck
+    - ineffassign
+    - unused
+    - errorlint
+    - errname
+    - gosec
+    - misspell
+  settings:
+    errcheck:
+      # CLI writes to stdout/stderr; ignoring write errors matches common Go CLI practice.
+      exclude-functions:
+        - fmt.Fprintf
+        - fmt.Fprintln
+        - fmt.Printf
+    gosec:
+      excludes:
+        # User-supplied paths are the product; not a web-include vector.
+        - G304
+        # Draft JSON and tests use group-w readable temp files.
+        - G306
+        # Constant env var names (e.g. DP1_FEED_API_KEY) trigger false positives.
+        - G101
+    misspell:
+      locale: US
+      ignore-rules:
+        - MONITORD
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+
+output:
+  formats:
+    text:
+      print-issued-lines: true
