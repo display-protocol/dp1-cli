@@ -1,0 +1,37 @@
+---
+description: >-
+  Testing and verification for Go changes in dp1-cli
+globs:
+  - "**/*.go"
+  - "**/*_test.go"
+alwaysApply: true
+---
+
+# Testing and verification
+
+## Required sequence
+
+1. Write or refine small, testable units first.
+2. Add or update unit tests.
+3. Add integration-style tests for cross-boundary behavior where it matters (e.g. `cmd` wiring, feed client error mapping).
+4. Implement or finish production wiring.
+5. Run verification (below).
+
+## Constraints
+
+- Do not ship behavior changes without tests unless explicitly approved.
+- Do not skip failure-path coverage for meaningful error handling changes.
+- Exercise concurrency-sensitive paths if you introduce goroutines, locks, or shared state beyond the current model.
+
+## Required verification
+
+```bash
+make check
+```
+
+That runs `golangci-lint` and `go test ./... -race -count=1` (see `Makefile`). For documentation-only edits involving Markdown, follow `make lint` / CI markdown rules when applicable.
+
+## Coverage posture
+
+- Prioritize domain-relevant logic, boundary behavior, and failure modes over raw percentages.
+- Do not regress meaningful tests without calling it out in the PR.

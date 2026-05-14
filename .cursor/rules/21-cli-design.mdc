@@ -1,0 +1,56 @@
+---
+description: >-
+  CLI contract for dp1-cli—commands, flags, env vars, JSON output, publish
+  semantics. Mirrors docs/cli_design.md.
+globs:
+  - "**/*.go"
+  - "cmd/**"
+  - "internal/feed/**"
+  - "internal/output/**"
+  - "internal/config/**"
+  - "docs/**"
+alwaysApply: true
+---
+
+# CLI design
+
+**Normative narrative:** `docs/cli_design.md`. When operator-visible behavior changes, update **that document** and any affected tests.
+
+**Not in this repo:** OpenAPI or HTTP resource design for a feed server. `internal/feed` targets paths and status codes documented in `docs/cli_design.md` for typical dp1-feed-style APIs.
+
+## Global behavior
+
+- Root persistent flag **`--json`**: structured output for scripting; shapes live in `internal/output`.
+- Binary: `dp1` (see `main` / build instructions in `README.md`).
+
+## Configuration
+
+- File: `~/.dp1/config.yaml`; subcommands `dp1 config …`, `dp1 init`.
+- Env: `DP1_PRIVATE_KEY`, `DP1_FEED_URL`, `DP1_FEED_API_KEY` (precedence vs flags documented in `docs/cli_design.md`).
+
+## Input sources
+
+- Commands taking `<source>` use `internal/input.ReadSource` with command context (stdin, file, http(s) URL with cancellation, base64).
+
+## Command surface (summary)
+
+- **`version`**, **`init`**, **`config`**, **`key`**
+- **`playlist`**, **`group`**, **`channel`:** `validate`, `verify`, `create`, `sign`, `publish`
+
+Do not add subcommands or change flag names without updating `docs/cli_design.md`.
+
+## Publish
+
+- Validate with dp1-go, then `POST` to `/api/v1/playlists`, `/api/v1/playlist-groups`, or `/api/v1/channels`.
+- Success expectation: **HTTP 201** (see `internal/feed` and `docs/cli_design.md`).
+- Parse `{"error","message"}` error bodies when present.
+
+## JSON output contract
+
+- Success: `ValidateOK`, `VerifyOK`, `PublishOK` (see `internal/output`).
+- Failure: `ErrorReport` with `ok: false`.
+
+## References
+
+- `docs/cli_design.md`
+- `docs/architecture.md`

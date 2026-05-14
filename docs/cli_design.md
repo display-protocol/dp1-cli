@@ -1,0 +1,141 @@
+# CLI design
+
+**Normative contract for this repo:** the implemented Cobra commands and flags under `cmd/`, plus stable JSON shapes from `internal/output`. When behavior changes, update **this document** and any affected tests.
+
+**Companion:** [`docs/architecture.md`](architecture.md) describes packages and data flow; this document is the **operator-facing** surface (commands, configuration, env vars, output). For building and testing the CLI, see [`DEVELOPMENT.md`](../DEVELOPMENT.md).
+
+**Related:** If you use [dp1-feed-v2](https://github.com/display-protocol/dp1-feed-v2), its HTTP API (including OpenAPI) defines server-side semantics for **`publish`**; the CLI assumes a compatible feed unless noted below.
+
+---
+
+## Global behavior
+
+- **Binary name:** `dp1` (when built with `go build -o dp1 .`).
+- **Machine output:** **`--json`** (persistent flag on the root command). When set, success and error objects are JSON-encoded to **stdout** (errors are still JSON to stdout for easy piping—mirror human mode by checking the `ok` field where applicable).
+
+---
+
+## Config file
+
+- **Path:** `~/.dp1/config.yaml` (see `dp1 config path`).
+- **Initialization:** `dp1 init` creates `~/.dp1` and writes the default file if missing.
+- **Keys writable via `dp1 config set`:**  
+  `signing.private_key`, `signing.public_key`, `feed.url`, `feed.api_key`, `defaults.output_format` (`human` or `json`).
+- **View merged config:** `dp1 config show` (defaults applied for missing fields).
+
+---
+
+## Environment variables
+
+| Variable | Used for |
+| -------- | -------- |
+| **`DP1_PRIVATE_KEY`** | Hex Ed25519 private key (seed or expanded) for `sign` subcommands when `--private-key` and config are unset. |
+| **`DP1_FEED_URL`** | Base URL for `publish` when `--feed-url` and `feed.url` are unset (non-empty flag wins). |
+| **`DP1_FEED_API_KEY`** | Bearer token for `publish` when `--api-key` and `feed.api_key` are unset (optional if the server accepts signature-only creates). |
+
+Precedence for feed credentials is implemented in `internal/feed.ResolveCredentials`: **flag → env → config** (URL must be non-empty after resolution).
+
+---
+
+## Input sources (`<source>`)
+
+Commands that take **`<source>`** (`validate`, `verify`, `publish`) load JSON via `internal/input.ReadSource`:
+
+| Form | Meaning |
+| ---- | ------- |
+| **`-`** or **empty** | Read **stdin**. |
+| **`http://` / `https://`** | Fetch with GET (bounded client timeout; follows command cancellation / signal-driven shutdown; `User-Agent: dp1-cli/1.0`). |
+| **File path** | Read bytes from disk. |
+| **Other non-file string** | If valid standard base64, decode; otherwise treat as file path error path. |
+
+Unsupported URL schemes are rejected explicitly.
+
+---
+
+## Command tree (summary)
+
+| Command | Purpose |
+| ------- | ------- |
+| `dp1 version` | Print dp1-cli, dp1-go, and Go versions (`--json` supported). |
+| `dp1 init` | Create config dir and default `config.yaml` if missing. |
+| `dp1 config …` | `path`, `show`, `get KEY`, `set KEY VALUE` (VALUE may be `-` for stdin line). |
+| `dp1 key …` | `generate`, `import`, `show` (Ed25519 for DP-1 multi-signatures). |
+| `dp1 playlist …` | `validate`, `verify`, `create`, `sign`, `publish` |
+| `dp1 group …` | `validate`, `verify`, `create`, `sign`, `publish` |
+| `dp1 channel …` | `validate`, `verify`, `create`, `sign`, `publish` |
+
+---
+
+## Document commands
+
+### `validate <source>`
+
+- Runs the appropriate **`dp1.ParseAndValidate*`** for the resource.
+- Human success: short summary with id/title/version fields when present.
+- JSON success: see **`ValidateOK`** in `internal/output` (`ok: true`).
+
+### `verify <source>`
+
+- Validates then **`verify.Run`** for the resource type.
+- **`--pubkey`:** optional filter—verify only signatures matching that key (accepts `did:key`, `did:pkh`, Ed25519 hex, Ethereum address forms as implemented in `internal/verify`).
+- JSON success: **`VerifyOK`**.
+
+### `create`
+
+- Interactive draft to stdout or **`-o` / `--output`** path. Drafts are **unsigned**; run **`sign`** before relying on them for publish or verification.
+
+### `sign <file>`
+
+- Appends one **v1.1+** multi-signature using dp1-go signing helpers (`internal/jsonsign`), preserving unknown top-level fields.
+- **`--private-key`:** hex key; else **`DP1_PRIVATE_KEY`**; else **`signing.private_key`** in config.
+- **`--role`:** `curator`, `feed`, `agent`, `institution`, or `licensor` (playlist/group/channel commands).
+- **`--ts`:** RFC3339 timestamp (default: now).
+- **`--output` / `-o`:** write signed doc (default: overwrite `<file>`; `-` for stdout).
+
+### `publish <source>`
+
+- Reads bytes, validates, **`POST`** to:
+
+  | Resource | Path |
+  | -------- | ---- |
+  | playlist | `/api/v1/playlists` |
+  | group | `/api/v1/playlist-groups` |
+  | channel | `/api/v1/channels` |
+
+- **`--feed-url`**, **`--api-key`:** override env/config for this invocation.
+- Success when HTTP status is **`201 Created`**; the CLI prints the response body (pretty-printed in human mode when valid JSON).
+- JSON success: **`PublishOK`** (`ok`, `resource`, `feed`, `statusCode`, `response`).
+
+Feeds that return another 2xx for create may not be recognized as success by this client.
+
+---
+
+## JSON output shapes (stable for scripting)
+
+Types are defined in `internal/output`:
+
+- **`ValidateOK`:** `ok`, `resource`, optional `dpVersion` / `version`, `id`, `title`.
+- **`VerifyOK`:** `ok`, `resource`, optional `mode`, `message`, `pubkeyMatch`.
+- **`PublishOK`:** `ok`, `resource`, `feed`, `statusCode`, `response` (raw JSON from server).
+- **`ErrorReport`:** `ok: false`, `command`, `error` (and optional `resource` when set by callers).
+
+---
+
+## Feed errors
+
+On non-201 responses for `publish`, the CLI parses JSON bodies shaped like `{"error":"...","message":"..."}` when present and includes them in a thrown error string / JSON `error` field (`internal/feed.APIError`).
+
+---
+
+## Compatibility notes
+
+- **Signing and hashing** follow DP-1 and dp1-go; the CLI does not add alternate canonicalization.
+- **Publish** is a thin wrapper around feed **create** semantics; PATCH/PUT/DELETE, registry endpoints, and conditional GET (ETag) are **not** exposed here.
+- For channel and group documents, validation requires dp1-go builds with the same extension/core schema alignment as your target feed.
+
+---
+
+## Further reading
+
+- [`docs/architecture.md`](architecture.md)
+- [DP-1 Specification](https://github.com/display-protocol/dp1)

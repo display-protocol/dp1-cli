@@ -1,0 +1,66 @@
+---
+description: >-
+  dp1-cli system architecture—package layout, boundaries, config, feed client,
+  observability. Mirrors docs/architecture.md.
+globs:
+  - "**/*.go"
+  - "docs/**"
+alwaysApply: true
+---
+
+# Architecture
+
+**Canonical detail:** `docs/architecture.md`. When behavior or layout changes, update **that document** and keep this rule aligned.
+
+dp1-cli is a **command-line tool** for DP-1 documents: validate (dp1-go), sign, verify, interactively draft, and optionally **POST** creates to a feed API.
+
+**Design philosophy:** thin transport and UX; protocol correctness lives in **dp1-go**.
+
+```text
+Operator → dp1-cli → dp1-go (validate / sign / verify)
+         ↘ HTTP POST → compatible feed (/api/v1/...)
+```
+
+## Target package layout
+
+| Area | Packages | Role |
+| ---- | -------- | ---- |
+| **Entry** | `main`, `cmd` | Cobra commands, flags, wiring. |
+| **Configuration** | `internal/config` | `~/.dp1/config.yaml`, defaults, cache invalidation. |
+| **Feed client** | `internal/feed` | Credentials resolution; `POST` to `/api/v1/{resource}`; parse API error JSON. |
+| **Input** | `internal/input` | JSON from file, URL, stdin, base64. |
+| **Output** | `internal/output` | Human vs `--json` success and error shapes. |
+| **Signing** | `internal/jsonsign`, `internal/signkey` | Append signatures; resolve private key (flag → env → config). |
+| **Verification** | `internal/verify` | Signature verification after validation. |
+| **Interactive create** | `internal/create`, `internal/ask`, `internal/fields` | Guided drafts. |
+| **Identifiers** | `internal/uuid` | IDs for drafts. |
+
+## Boundaries
+
+- **`cmd`:** Orchestration only—no forking DP-1 canonicalization.
+- **`internal/feed`:** HTTP only; sends prepared bytes.
+- **`internal/config`:** Filesystem + defaults only.
+
+## Dependency direction
+
+- `cmd` → `internal/*` → (dp1-go, stdlib, third-party).
+- `internal/feed` may depend on `internal/config` for URL/key defaults.
+- Avoid cycles; do not import `cmd` from libraries.
+
+## Configuration and credentials
+
+- Config dir: `~/.dp1/`. See `docs/cli_design.md` for env vars and key paths.
+
+## Observability
+
+- Human mode: results on stdout, errors on stderr; `--json` uses structured stdout (see `internal/output`).
+
+## Out of scope
+
+- Feed server, database, player, or full HTTP CRUD in-repo.
+
+## Further reading
+
+- `docs/architecture.md`
+- `docs/cli_design.md`
+- DP-1: https://github.com/display-protocol/dp1

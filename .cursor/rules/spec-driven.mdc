@@ -1,0 +1,33 @@
+---
+description: >-
+  Planning workflow for large CLI features, new command trees, or broad refactors
+globs:
+  - "**/*.go"
+  - "docs/**"
+  - "AGENTS.md"
+alwaysApply: true
+---
+
+# Spec-driven development (CLI scope)
+
+Apply when the work is a **large CLI feature** (new top-level command family, many flags), a **broad refactor** across `cmd` and multiple `internal` packages, or **behavior that changes** the operator contract in a non-trivial way.
+
+This repo does **not** use a `PLANS.md` file. Planning is lightweight and doc-backed.
+
+## Required planning workflow
+
+1. Read `.cursor/rules/01-master-design.mdc`.
+2. Read `.cursor/rules/20-architecture.mdc` (and `docs/architecture.md` for full detail).
+3. Read `.cursor/rules/21-cli-design.mdc` (and `docs/cli_design.md` for full detail).
+4. Summarize current behavior, the proposed CLI surface (commands, flags, JSON shapes), and open questions.
+5. Produce a short plan **before** large code changes.
+6. Implement and run **`make check`**.
+
+## Enforcement
+
+- If the change depends on an unresolved product or compat decision, state that in the plan and in PR notes.
+- Prefer staged, reversible steps for risky refactors.
+
+## When this rule does not apply
+
+- Small fixes, single-command tweaks, test-only changes, or doc typo fixes—use judgment; still update `docs/cli_design.md` if behavior changes.

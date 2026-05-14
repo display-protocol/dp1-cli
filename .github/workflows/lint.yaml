@@ -1,25 +1,51 @@
-name: Lint Validator
+name: Lint
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+      - develop
+    paths:
+      - "**/*.go"
+      - "*.go"
+      - "go.mod"
+      - "go.sum"
+      - "**/*.md"
+      - ".golangci.yml"
+      - ".markdownlint-cli2.jsonc"
+      - ".github/workflows/lint.yaml"
   pull_request:
-    branches: [main]
+    branches:
+      - main
+      - develop
+    paths:
+      - "**/*.go"
+      - "*.go"
+      - "go.mod"
+      - "go.sum"
+      - "**/*.md"
+      - ".golangci.yml"
+      - ".markdownlint-cli2.jsonc"
+      - ".github/workflows/lint.yaml"
+
+permissions:
+  contents: read
 
 jobs:
-  lint:
+  golang:
+    name: Lint and build (Go)
     runs-on: ubuntu-latest
-    name: Validator Code Quality Checks
+    timeout-minutes: 10
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Go
+      - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.23'
-          cache-dependency-path: 'go.sum'
+          go-version-file: go.mod
+          cache: true
 
       - name: Download dependencies
         run: go mod download
@@ -27,19 +53,33 @@ jobs:
       - name: Verify dependencies
         run: go mod verify
 
-      - name: Run go vet
-        run: go vet ./...
+      - name: Check go mod tidy
+        run: |
+          go mod tidy
+          git diff --exit-code go.mod go.sum || {
+            echo "go.mod or go.sum needs tidying. Run 'go mod tidy' and commit changes."
+            exit 1
+          }
+
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v8
         with:
-          version: v2.1.6
+          version: v2.4.0
           working-directory: ./
-          args: --timeout=5m
 
-      - name: Check Go formatting
-        run: |
-          if [ "$(gofmt -s -l . | wc -l)" -gt 0 ]; then
-            echo "The following files are not formatted:"
-            gofmt -s -l .
-            exit 1
-          fi
+      - name: Build CLI
+        run: go build -v .
+
+      - name: Build all packages
+        run: go build -v ./...
+
+  markdown:
+    name: Lint markdown
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Run markdownlint
+        run: npx --yes markdownlint-cli2 "**/*.md" "#node_modules"

@@ -1,3 +1,5 @@
+# https://github.com/github/gitignore/blob/main/Go.gitignore
+
 # Binaries for programs and plugins
 *.exe
 *.exe~
@@ -5,78 +7,28 @@
 *.so
 *.dylib
 
+# Built CLI binary: go build -o dp1 .
+/dp1
+/dp1-cli
+
 # Test binary, built with `go test -c`
 *.test
 
-# Output of the go coverage tool, specifically when used with LiteIDE
+# Output of the go coverage tool
 *.out
+coverage.txt
+coverage.html
 
-# Dependency directories (remove the comment below to include it)
+# Dependency directories (remove the comment below if you use vendoring)
 # vendor/
 
 # Go workspace file
 go.work
 go.work.sum
 
-# Build output
-/bin/
-/build/
-/dist/
+# Local smoke-test playlists
+playlist.json
+playlist.signed.json
 
-# IDE-specific files
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-
-# OS-specific files
+# OS
 .DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-
-# Environment variables
-.env
-.env.local
-.env.*.local
-
-# Log files
-*.log
-
-# Temporary files
-*.tmp
-*.temp
-
-# Go specific temporary files
-*.a
-*.[568ao]
-*.a[568o]
-*.[56789ao]
-*.a[56789o]
-*.cgo*.go
-*.cgo*.c
-_cgo_*
-_obj
-_test
-_testmain.go
-
-# Application specific
-config/local.yml
-config/local.yaml
-coverage.out
-coverage.html
-
-# Docker
-Dockerfile.local
-docker-compose.override.yml
-
-# Kubernetes
-*.local.yaml
-*.local.yml
-
-# binaries
-dp1-validator

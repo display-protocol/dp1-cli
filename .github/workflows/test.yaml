@@ -1,25 +1,45 @@
-name: Test Validator
+name: Tests
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+      - develop
+    paths:
+      - "**/*.go"
+      - "*.go"
+      - "go.mod"
+      - "go.sum"
+      - ".github/workflows/test.yaml"
   pull_request:
-    branches: [main]
+    branches:
+      - main
+      - develop
+    paths:
+      - "**/*.go"
+      - "*.go"
+      - "go.mod"
+      - "go.sum"
+      - ".github/workflows/test.yaml"
+
+permissions:
+  contents: read
 
 jobs:
-  test:
+  unit-test:
+    name: Unit tests
     runs-on: ubuntu-latest
-    name: Validator Tests
+    timeout-minutes: 10
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Go
+      - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.23'
-          cache-dependency-path: 'go.sum'
+          go-version-file: go.mod
+          cache: true
 
       - name: Download dependencies
         run: go mod download
@@ -27,24 +47,28 @@ jobs:
       - name: Verify dependencies
         run: go mod verify
 
-      - name: Run tests with race detection
-        run: go test -race -v ./...
-
-      - name: Run benchmarks
-        run: go test -bench=. -benchmem ./...
-
       - name: Run tests with coverage
-        run: go test -v -coverprofile=coverage.out -covermode=atomic $(go list ./... | grep -vE "/cdp")
+        run: |
+          go test -v -race -count=1 -timeout=5m \
+            -coverprofile=coverage.out \
+            -covermode=atomic \
+            ./...
+
+      - name: Display coverage summary
+        run: go tool cover -func=coverage.out | tail -25
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage.out
+          retention-days: 7
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v4
         with:
-          files: ./coverage.out
-          slug: display-protocol/dp1-validator
-          flags: validator
-          name: dp1-validator-coverage
           token: ${{ secrets.CODECOV_TOKEN }}
-          fail_ci_if_error: true
-
-      - name: Build project
-        run: go build -v ./...
+          file: ./coverage.out
+          flags: tests
+          fail_ci_if_error: false
+        continue-on-error: true
