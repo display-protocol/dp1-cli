@@ -1,6 +1,7 @@
 package input
 
 import (
+	"context"
 	"encoding/base64"
 	"fmt"
 	"io"
@@ -14,7 +15,8 @@ import (
 const userAgent = "dp1-cli/1.0"
 
 // ReadSource loads DP-1 JSON from stdin ("-" or empty), HTTP(S) URL, a file path, or a base64 string.
-func ReadSource(source string) ([]byte, error) {
+// HTTP(S) fetches honor ctx for cancellation; stdin reads do not.
+func ReadSource(ctx context.Context, source string) ([]byte, error) {
 	src := strings.TrimSpace(source)
 	if src == "" || src == "-" {
 		return io.ReadAll(os.Stdin)
@@ -23,7 +25,7 @@ func ReadSource(source string) ([]byte, error) {
 	if u, err := url.Parse(src); err == nil && u.Scheme != "" && u.Host != "" {
 		switch strings.ToLower(u.Scheme) {
 		case "http", "https":
-			return fetchURL(src)
+			return fetchURL(ctx, src)
 		default:
 			return nil, fmt.Errorf("unsupported URL scheme %q (use http or https)", u.Scheme)
 		}
@@ -43,9 +45,10 @@ func ReadSource(source string) ([]byte, error) {
 	return nil, fmt.Errorf("cannot read source %q: not a valid file, URL, or base64 payload", source)
 }
 
-func fetchURL(rawURL string) ([]byte, error) {
+// fetchURL performs a GET with a bounded timeout; shorter than internal/feed (60s) because reads here are single-shot validation snapshots.
+func fetchURL(ctx context.Context, rawURL string) ([]byte, error) {
 	client := &http.Client{Timeout: 30 * time.Second}
-	req, err := http.NewRequest(http.MethodGet, rawURL, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, rawURL, nil)
 	if err != nil {
 		return nil, err
 	}

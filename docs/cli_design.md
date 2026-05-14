@@ -44,7 +44,7 @@ Commands that take **`<source>`** (`validate`, `verify`, `publish`) load JSON vi
 | Form | Meaning |
 | ---- | ------- |
 | **`-`** or **empty** | Read **stdin**. |
-| **`http://` / `https://`** | Fetch with GET (bounded client timeout; `User-Agent: dp1-cli/1.0`). |
+| **`http://` / `https://`** | Fetch with GET (bounded client timeout; follows command cancellation / signal-driven shutdown; `User-Agent: dp1-cli/1.0`). |
 | **File path** | Read bytes from disk. |
 | **Other non-file string** | If valid standard base64, decode; otherwise treat as file path error path. |
 

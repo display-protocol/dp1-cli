@@ -79,7 +79,7 @@ func init() {
 }
 
 func runPlaylistValidate(cmd *cobra.Command, args []string) error {
-	data, err := input.ReadSource(args[0])
+	data, err := input.ReadSource(cmd.Context(), args[0])
 	if err != nil {
 		output.PrintError(jsonOut, output.ErrorReport{Command: "playlist validate", Error: err.Error()})
 		return errPrinted
@@ -100,7 +100,7 @@ func runPlaylistValidate(cmd *cobra.Command, args []string) error {
 }
 
 func runPlaylistVerify(cmd *cobra.Command, args []string) error {
-	data, err := input.ReadSource(args[0])
+	data, err := input.ReadSource(cmd.Context(), args[0])
 	if err != nil {
 		output.PrintError(jsonOut, output.ErrorReport{Command: "playlist verify", Error: err.Error()})
 		return errPrinted

@@ -69,7 +69,7 @@ func runGroupPublish(cmd *cobra.Command, args []string) error {
 }
 
 func runPublish(cmd *cobra.Command, source, commandName, resourceLabel string, path feed.Resource, validate func([]byte) error) error {
-	data, err := input.ReadSource(source)
+	data, err := input.ReadSource(cmd.Context(), source)
 	if err != nil {
 		output.PrintError(jsonOut, output.ErrorReport{Command: commandName, Error: err.Error()})
 		return errPrinted

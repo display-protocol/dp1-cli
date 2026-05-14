@@ -12,6 +12,17 @@ import (
 	"github.com/display-protocol/dp1-cli/internal/uuid"
 )
 
+func validateChannelSummary(s string) error {
+	s = strings.TrimSpace(s)
+	if s == "" {
+		return nil
+	}
+	if len(s) > 2000 {
+		return fmt.Errorf("too long")
+	}
+	return nil
+}
+
 // Channel prompts for a DP-1 channel document (without signatures — run `channel sign`).
 func Channel() (*ch.Channel, error) {
 	idHint, err := ask.Line("Channel id UUID v4 (optional)", "", true, fields.UUIDv4EmptyOK)
@@ -83,16 +94,7 @@ func Channel() (*ch.Channel, error) {
 		pub = &ent
 	}
 
-	sum, err := ask.Line(`Summary text (optional, 1–2000 chars if set)`, "", true, func(s string) error {
-		s = strings.TrimSpace(s)
-		if s == "" {
-			return nil
-		}
-		if len(s) > 2000 {
-			return fmt.Errorf("too long")
-		}
-		return nil
-	})
+	sum, err := ask.Line(`Summary text (optional, 1–2000 chars if set)`, "", true, validateChannelSummary)
 	if err != nil {
 		return nil, err
 	}

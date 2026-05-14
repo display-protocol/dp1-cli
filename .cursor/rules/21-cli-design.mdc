@@ -30,7 +30,7 @@ alwaysApply: true
 
 ## Input sources
 
-- Commands taking `<source>` use `internal/input.ReadSource` (stdin, file, http(s) URL, base64).
+- Commands taking `<source>` use `internal/input.ReadSource` with command context (stdin, file, http(s) URL with cancellation, base64).
 
 ## Command surface (summary)
 

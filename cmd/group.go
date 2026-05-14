@@ -79,7 +79,7 @@ func init() {
 }
 
 func runGroupValidate(cmd *cobra.Command, args []string) error {
-	data, err := input.ReadSource(args[0])
+	data, err := input.ReadSource(cmd.Context(), args[0])
 	if err != nil {
 		output.PrintError(jsonOut, output.ErrorReport{Command: "group validate", Error: err.Error()})
 		return errPrinted
@@ -99,7 +99,7 @@ func runGroupValidate(cmd *cobra.Command, args []string) error {
 }
 
 func runGroupVerify(cmd *cobra.Command, args []string) error {
-	data, err := input.ReadSource(args[0])
+	data, err := input.ReadSource(cmd.Context(), args[0])
 	if err != nil {
 		output.PrintError(jsonOut, output.ErrorReport{Command: "group verify", Error: err.Error()})
 		return errPrinted

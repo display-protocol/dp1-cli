@@ -18,7 +18,7 @@ Operator → dp1-cli → dp1-go (validate / sign / verify)
 | **Entry** | `main`, `cmd` | Cobra commands, flags, wiring; no business rules beyond orchestration. |
 | **Configuration** | `internal/config` | `~/.dp1/config.yaml`: signing keys, default feed URL/API key, output defaults. |
 | **Feed client** | `internal/feed` | Minimal HTTP client: resolve credentials, `POST /api/v1/{playlists,playlist-groups,channels}`, map error bodies. |
-| **Input** | `internal/input` | Load JSON from file path, `http(s)` URL, stdin (`-`), or inline base64. |
+| **Input** | `internal/input` | Load JSON from file path, `http(s)` URL (GET uses bounded timeout and honors command cancellation), stdin (`-`), or inline base64. |
 | **Output** | `internal/output` | Human-readable vs machine JSON for success and error reporting. |
 | **Signing helpers** | `internal/jsonsign`, `internal/signkey` | Append multi-signatures while preserving unknown fields; resolve private key (flag → env → config). |
 | **Verification** | `internal/verify` | Signature checks after schema validation (v1.1+ multi-sig and legacy paths). |

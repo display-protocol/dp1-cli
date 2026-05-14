@@ -1,7 +1,9 @@
 package input
 
 import (
+	"context"
 	"encoding/base64"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -18,7 +20,7 @@ func TestReadSource_file(t *testing.T) {
 	if err := os.WriteFile(path, want, 0o600); err != nil {
 		t.Fatal(err)
 	}
-	got, err := ReadSource(path)
+	got, err := ReadSource(context.Background(), path)
 	if err != nil {
 		t.Fatalf("ReadSource: %v", err)
 	}
@@ -31,7 +33,7 @@ func TestReadSource_base64Inline(t *testing.T) {
 	t.Parallel()
 	plain := []byte(`{"x":true}`)
 	b64 := base64.StdEncoding.EncodeToString(plain)
-	got, err := ReadSource(b64)
+	got, err := ReadSource(context.Background(), b64)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -51,7 +53,7 @@ func TestReadSource_HTTP(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	got, err := ReadSource(srv.URL)
+	got, err := ReadSource(context.Background(), srv.URL)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -62,7 +64,7 @@ func TestReadSource_HTTP(t *testing.T) {
 
 func TestReadSource_unsupportedURLScheme(t *testing.T) {
 	t.Parallel()
-	_, err := ReadSource("ftp://example.com/x")
+	_, err := ReadSource(context.Background(), "ftp://example.com/x")
 	if err == nil {
 		t.Fatal("expected error")
 	}
@@ -74,7 +76,7 @@ func TestReadSource_unsupportedURLScheme(t *testing.T) {
 func TestReadSource_notFound(t *testing.T) {
 	t.Parallel()
 	path := filepath.Join(t.TempDir(), "nope.json")
-	_, err := ReadSource(path)
+	_, err := ReadSource(context.Background(), path)
 	if err == nil {
 		t.Fatal("expected error")
 	}
@@ -82,7 +84,7 @@ func TestReadSource_notFound(t *testing.T) {
 
 func TestReadSource_garbage(t *testing.T) {
 	t.Parallel()
-	_, err := ReadSource("### not a file url or base64 ###")
+	_, err := ReadSource(context.Background(), "### not a file url or base64 ###")
 	if err == nil {
 		t.Fatal("expected error")
 	}
@@ -94,7 +96,7 @@ func TestFetchURL_nonOK(t *testing.T) {
 		http.Error(w, "no", http.StatusNotFound)
 	}))
 	defer srv.Close()
-	_, err := fetchURL(srv.URL)
+	_, err := fetchURL(context.Background(), srv.URL)
 	if err == nil {
 		t.Fatal("expected error")
 	}
@@ -111,7 +113,7 @@ func TestReadSource_trimSpace(t *testing.T) {
 	if err := os.WriteFile(path, content, 0o600); err != nil {
 		t.Fatal(err)
 	}
-	got, err := ReadSource("  " + path + "\t")
+	got, err := ReadSource(context.Background(), "  "+path+"\t")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -126,8 +128,30 @@ func TestFetchURL_serverClosed(t *testing.T) {
 	url := srv.URL
 	srv.Close()
 
-	_, err := fetchURL(url)
+	_, err := fetchURL(context.Background(), url)
 	if err == nil {
 		t.Fatal("expected error after server closed")
+	}
+}
+
+func TestReadSource_HTTP_contextCanceled(t *testing.T) {
+	t.Parallel()
+	block := make(chan struct{})
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		<-block
+		_, _ = w.Write([]byte(`{}`))
+	}))
+	defer srv.Close()
+	defer close(block)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	_, err := ReadSource(ctx, srv.URL)
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("want context.Canceled, got %v", err)
 	}
 }

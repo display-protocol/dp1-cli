@@ -79,7 +79,7 @@ func init() {
 }
 
 func runChannelValidate(cmd *cobra.Command, args []string) error {
-	data, err := input.ReadSource(args[0])
+	data, err := input.ReadSource(cmd.Context(), args[0])
 	if err != nil {
 		output.PrintError(jsonOut, output.ErrorReport{Command: "channel validate", Error: err.Error()})
 		return errPrinted
@@ -99,7 +99,7 @@ func runChannelValidate(cmd *cobra.Command, args []string) error {
 }
 
 func runChannelVerify(cmd *cobra.Command, args []string) error {
-	data, err := input.ReadSource(args[0])
+	data, err := input.ReadSource(cmd.Context(), args[0])
 	if err != nil {
 		output.PrintError(jsonOut, output.ErrorReport{Command: "channel verify", Error: err.Error()})
 		return errPrinted

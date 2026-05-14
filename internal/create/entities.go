@@ -10,6 +10,21 @@ import (
 	"github.com/display-protocol/dp1-cli/internal/fields"
 )
 
+func buildEntity(name, key, url string) identity.Entity {
+	ent := identity.Entity{Name: name, Key: strings.TrimSpace(key)}
+	if strings.TrimSpace(url) != "" {
+		ent.URL = strings.TrimSpace(url)
+	}
+	return ent
+}
+
+func ensurePlaylistURIs(rows []string) ([]string, error) {
+	if len(rows) == 0 {
+		return nil, fmt.Errorf("need at least one playlist URI")
+	}
+	return rows, nil
+}
+
 func promptEntity(scope string) (identity.Entity, error) {
 	name, err := ask.Line(scope+" entity name", "", false, nonEmpty())
 	if err != nil {
@@ -23,10 +38,7 @@ func promptEntity(scope string) (identity.Entity, error) {
 	if err != nil {
 		return identity.Entity{}, err
 	}
-	ent := identity.Entity{Name: name, Key: strings.TrimSpace(key)}
-	if strings.TrimSpace(url) != "" {
-		ent.URL = strings.TrimSpace(url)
-	}
+	ent := buildEntity(name, key, url)
 	return ent, nil
 }
 
@@ -50,13 +62,7 @@ func promptPlaylistURIs(prompt string) ([]string, error) {
 		if strings.TrimSpace(s) == "" {
 			break
 		}
-		if len(rows) == 0 && strings.TrimSpace(s) == "" {
-			return nil, fmt.Errorf("need at least one playlist URI") // unreachable if addEmpty false
-		}
 		rows = append(rows, strings.TrimSpace(s))
 	}
-	if len(rows) == 0 {
-		return nil, fmt.Errorf("need at least one playlist URI")
-	}
-	return rows, nil
+	return ensurePlaylistURIs(rows)
 }
