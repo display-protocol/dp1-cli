@@ -28,7 +28,13 @@ func Channel() (*ch.Channel, error) {
 	tracker := ask.NewFieldTracker()
 
 	tracker.Display()
-	idHint, err := ask.LineWithTracker(tracker, "Channel id UUID v4 (optional)", "", true, fields.UUIDv4EmptyOK)
+	version, err := ask.LineWithTracker(tracker, "Extension version semver", "0.1.0", false, fields.SemVer)
+	if err != nil {
+		return nil, err
+	}
+
+	tracker.Display()
+	idHint, err := ask.LineWithTracker(tracker, "Channel id UUID v4 (optional, empty = generate)", "", true, fields.UUIDv4EmptyOK)
 	if err != nil {
 		return nil, err
 	}
@@ -42,25 +48,23 @@ func Channel() (*ch.Channel, error) {
 	}
 
 	tracker.Display()
-	slug, err := ask.LineWithTracker(tracker, "Slug (required, lowercase hyphenated)", "", false, fields.Slug)
-	if err != nil {
-		return nil, err
-	}
-
-	tracker.Display()
 	title, err := ask.LineWithTracker(tracker, "Title", "", false, nonEmpty())
 	if err != nil {
 		return nil, err
 	}
 
 	tracker.Display()
-	version, err := ask.LineWithTracker(tracker, "Extension version semver", "0.1.0", false, fields.SemVer)
+	slug, err := ask.LineWithTracker(tracker, "Slug (optional)", "", true, fields.SlugEmptyOK)
 	if err != nil {
 		return nil, err
 	}
+	if strings.TrimSpace(slug) == "" {
+		slug = slugFromTitle(title)
+		tracker.UpdateLastField(slug)
+	}
 
 	tracker.Display()
-	created, err := ask.LineWithTracker(tracker, "Created RFC3339 (optional)", "", true, nil)
+	created, err := ask.LineWithTracker(tracker, "Created RFC3339 (optional, empty = now)", "", true, nil)
 	if err != nil {
 		return nil, err
 	}

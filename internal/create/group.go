@@ -15,7 +15,7 @@ func Group() (*playlistgroup.Group, error) {
 	tracker := ask.NewFieldTracker()
 
 	tracker.Display()
-	idHint, err := ask.LineWithTracker(tracker, "Group id UUID v4 (optional)", "", true, fields.UUIDv4EmptyOK)
+	idHint, err := ask.LineWithTracker(tracker, "Group id UUID v4 (optional, empty = generate)", "", true, fields.UUIDv4EmptyOK)
 	if err != nil {
 		return nil, err
 	}
@@ -39,21 +39,13 @@ func Group() (*playlistgroup.Group, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	tracker.Display()
-	curator, err := ask.LineWithTracker(tracker, "Curator name (optional)", "", true, nil)
-	if err != nil {
-		return nil, err
+	if strings.TrimSpace(slug) == "" {
+		slug = slugFromTitle(title)
+		tracker.UpdateLastField(slug)
 	}
 
 	tracker.Display()
-	sum, err := ask.LineWithTracker(tracker, "Summary (optional)", "", true, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	tracker.Display()
-	created, err := ask.LineWithTracker(tracker, "Created RFC3339 (optional)", "", true, nil)
+	created, err := ask.LineWithTracker(tracker, "Created RFC3339 (optional, empty = now)", "", true, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -63,6 +55,18 @@ func Group() (*playlistgroup.Group, error) {
 	}
 
 	plURIs, err := promptPlaylistURIsWithTracker(tracker, "Playlist URIs in this group")
+	if err != nil {
+		return nil, err
+	}
+
+	tracker.Display()
+	curator, err := ask.LineWithTracker(tracker, "Curator name (optional)", "", true, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	tracker.Display()
+	sum, err := ask.LineWithTracker(tracker, "Summary (optional)", "", true, nil)
 	if err != nil {
 		return nil, err
 	}

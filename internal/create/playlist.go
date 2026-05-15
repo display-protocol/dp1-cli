@@ -48,6 +48,10 @@ func Playlist() (*pl.Playlist, error) {
 	if err != nil {
 		return nil, err
 	}
+	if strings.TrimSpace(slug) == "" {
+		slug = slugFromTitle(title)
+		tracker.UpdateLastField(slug)
+	}
 
 	tracker.Display()
 	created, err := ask.LineWithTracker(tracker, "Created RFC3339 (optional, empty = now)", "", true, nil)

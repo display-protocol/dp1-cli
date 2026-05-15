@@ -83,6 +83,7 @@ Unsupported URL schemes are rejected explicitly.
 ### `create`
 
 - Interactive draft to stdout or **`-o` / `--output`** path. Drafts are **unsigned**; run **`sign`** before relying on them for publish or verification.
+- **`playlist create`**, **`group create`**, and **`channel create`** share a baseline prompt order where it fits: optional resource **id** (UUID v4, generated when blank), **title**, optional **slug** (when blank, the CLI derives one capped at **24 characters**: a truncated normalized title stem plus `-` and the **last 12-character hexadecimal block of a UUID v4**; if the title cannot be normalized, the slug is **24 random `a-z` / `0-9` characters** — no generic stem like `untitled`), optional **created** (default now), then type-specific prompts. **`channel create`** asks extension **version** first (playlist **`dpVersion`** analogue).
 
 ### `sign <file>`
 
