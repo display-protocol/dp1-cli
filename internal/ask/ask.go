@@ -6,8 +6,62 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/fatih/color"
 	"github.com/manifoldco/promptui"
 )
+
+// FieldTracker tracks completed fields for display during interactive sessions.
+type FieldTracker struct {
+	Fields         []CompletedField // exported for access in create package
+	lastDisplayLen int              // number of fields displayed last time
+}
+
+// CompletedField represents a single completed field.
+type CompletedField struct {
+	Label string
+	Value string
+}
+
+// NewFieldTracker creates a new field tracker for an interactive session.
+func NewFieldTracker() *FieldTracker {
+	return &FieldTracker{
+		Fields:         make([]CompletedField, 0),
+		lastDisplayLen: 0,
+	}
+}
+
+// Add records a completed field with its label and value.
+func (ft *FieldTracker) Add(label, value string) {
+	ft.Fields = append(ft.Fields, CompletedField{
+		Label: label,
+		Value: value,
+	})
+}
+
+// Display prints all completed fields with their values.
+// Only displays new fields since last display.
+func (ft *FieldTracker) Display() {
+	if len(ft.Fields) == 0 {
+		return
+	}
+
+	// Only display fields we haven't displayed yet
+	if ft.lastDisplayLen >= len(ft.Fields) {
+		return
+	}
+
+	// Display new completed fields with color
+	cyan := color.New(color.FgCyan).SprintFunc()
+	white := color.New(color.FgWhite).SprintFunc()
+	checkmark := color.New(color.FgGreen).Sprint("✓")
+
+	for i := ft.lastDisplayLen; i < len(ft.Fields); i++ {
+		f := ft.Fields[i]
+		fmt.Printf("%s %s %s\n", checkmark, cyan(f.Label+":"), white(f.Value))
+	}
+
+	ft.lastDisplayLen = len(ft.Fields)
+}
 
 // validateConfirmInput is the prompt validator for [Confirm].
 func validateConfirmInput(s string) error {
@@ -33,6 +87,11 @@ func resolveConfirm(trimmedLower string, defYes bool) bool {
 
 // Confirm prompts y/n ; empty uses defYes.
 func Confirm(label string, defYes bool) (bool, error) {
+	return ConfirmWithTracker(nil, label, defYes)
+}
+
+// ConfirmWithTracker prompts y/n with field tracking support.
+func ConfirmWithTracker(tracker *FieldTracker, label string, defYes bool) (bool, error) {
 	opts := "(y/N)"
 	if defYes {
 		opts = "(Y/n)"
@@ -49,7 +108,18 @@ func Confirm(label string, defYes bool) (bool, error) {
 		return false, err
 	}
 	s = strings.TrimSpace(strings.ToLower(s))
-	return resolveConfirm(s, defYes), nil
+	result := resolveConfirm(s, defYes)
+
+	// Track the completed field
+	if tracker != nil {
+		value := "no"
+		if result {
+			value = "yes"
+		}
+		tracker.Add(label, value)
+	}
+
+	return result, nil
 }
 
 // normalizeLineValue trims and applies default when the user left the line empty.
@@ -103,29 +173,88 @@ func finalizeLine(raw string, def string, allowEmpty bool, validate func(string)
 
 // Line reads one line with optional validation. Trimmed spaces; empty substitutes def when helpful.
 func Line(label string, def string, allowEmpty bool, validate func(string) error) (string, error) {
-	show := label
-	if def != "" && !strings.Contains(strings.ToLower(label), "optional") {
-		show = fmt.Sprintf("%s [%s]", label, def)
+	return LineWithTracker(nil, label, def, allowEmpty, validate)
+}
+
+// LineWithTracker reads one line with field tracking support.
+func LineWithTracker(tracker *FieldTracker, label string, def string, allowEmpty bool, validate func(string) error) (string, error) {
+	gray := color.New(color.FgHiBlack).SprintFunc()
+
+	// Build prompt label
+	promptLabel := label
+
+	// Create templates for showing default as a hint
+	templates := &promptui.PromptTemplates{
+		Prompt:  "{{ . }} ",
+		Valid:   "{{ . | green }} ",
+		Invalid: "{{ . | red }} ",
+		Success: "{{ . | bold }} ",
 	}
+
+	if def != "" {
+		// Show default as gray hint
+		promptLabel = fmt.Sprintf("%s %s", label, gray(fmt.Sprintf("(default: %s)", def)))
+	}
+
 	prompt := promptui.Prompt{
-		Label: show,
+		Label:     promptLabel,
+		Templates: templates,
 		Validate: func(raw string) error {
 			return validateLinePrompt(raw, def, allowEmpty, validate)
 		},
 	}
+
 	raw, err := prompt.Run()
 	if err != nil {
 		return "", err
 	}
-	return finalizeLine(raw, def, allowEmpty, validate)
+
+	result, err := finalizeLine(raw, def, allowEmpty, validate)
+	if err != nil {
+		return "", err
+	}
+
+	// Track the completed field (caller will update value if needed before next prompt)
+	if tracker != nil {
+		displayValue := result
+		if displayValue == "" {
+			displayValue = "(empty)"
+		}
+		tracker.Add(label, displayValue)
+	}
+
+	return result, nil
+}
+
+// UpdateLastField updates the value of the most recently added field.
+// Use this when a value is generated after the initial prompt.
+func (ft *FieldTracker) UpdateLastField(value string) {
+	if len(ft.Fields) > 0 {
+		ft.Fields[len(ft.Fields)-1].Value = value
+	}
 }
 
 func Select(label string, items []string) (int, string, error) {
+	return SelectWithTracker(nil, label, items)
+}
+
+// SelectWithTracker shows a selection prompt with field tracking support.
+func SelectWithTracker(tracker *FieldTracker, label string, items []string) (int, string, error) {
 	prompt := promptui.Select{
 		Label: label,
 		Items: items,
 	}
-	return prompt.Run()
+	idx, value, err := prompt.Run()
+	if err != nil {
+		return idx, value, err
+	}
+
+	// Track the completed field
+	if tracker != nil {
+		tracker.Add(label, value)
+	}
+
+	return idx, value, nil
 }
 
 // ParseOptionalFloat returns nil for blank input; otherwise parses a float64.
@@ -153,7 +282,12 @@ func ParseOptionalInt(s string) (*int, error) {
 }
 
 func FloatEmptyOK(label string) (*float64, error) {
-	s, err := Line(label+" (optional)", "", true, nil)
+	return FloatEmptyOKWithTracker(nil, label)
+}
+
+// FloatEmptyOKWithTracker reads an optional float with field tracking support.
+func FloatEmptyOKWithTracker(tracker *FieldTracker, label string) (*float64, error) {
+	s, err := LineWithTracker(tracker, label+" (optional)", "", true, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -161,7 +295,12 @@ func FloatEmptyOK(label string) (*float64, error) {
 }
 
 func IntEmptyOK(label string) (*int, error) {
-	s, err := Line(label+" (optional)", "", true, nil)
+	return IntEmptyOKWithTracker(nil, label)
+}
+
+// IntEmptyOKWithTracker reads an optional int with field tracking support.
+func IntEmptyOKWithTracker(tracker *FieldTracker, label string) (*int, error) {
+	s, err := LineWithTracker(tracker, label+" (optional)", "", true, nil)
 	if err != nil {
 		return nil, err
 	}

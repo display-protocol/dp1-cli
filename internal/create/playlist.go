@@ -14,13 +14,17 @@ import (
 
 // Playlist interactively constructs a playlist document (without signatures — run `playlist sign`).
 func Playlist() (*pl.Playlist, error) {
+	tracker := ask.NewFieldTracker()
+
 	verDefault := "1.1.0"
-	ver, err := ask.Line("dpVersion", verDefault, false, fields.SemVer)
+	tracker.Display()
+	ver, err := ask.LineWithTracker(tracker, "dpVersion", verDefault, false, fields.SemVer)
 	if err != nil {
 		return nil, err
 	}
 
-	idHint, err := ask.Line("Playlist id UUID v4 (optional, empty = generate)", "", true, fields.UUIDv4EmptyOK)
+	tracker.Display()
+	idHint, err := ask.LineWithTracker(tracker, "Playlist id UUID v4 (optional, empty = generate)", "", true, fields.UUIDv4EmptyOK)
 	if err != nil {
 		return nil, err
 	}
@@ -30,47 +34,55 @@ func Playlist() (*pl.Playlist, error) {
 		if err != nil {
 			return nil, err
 		}
+		tracker.UpdateLastField(id)
 	}
 
-	title, err := ask.Line("Title", "", false, nonEmpty())
+	tracker.Display()
+	title, err := ask.LineWithTracker(tracker, "Title", "", false, nonEmpty())
 	if err != nil {
 		return nil, err
 	}
 
-	slug, err := ask.Line("Slug (optional)", "", true, fields.SlugEmptyOK)
+	tracker.Display()
+	slug, err := ask.LineWithTracker(tracker, "Slug (optional)", "", true, fields.SlugEmptyOK)
 	if err != nil {
 		return nil, err
 	}
 
-	created, err := ask.Line("Created RFC3339 (optional, empty = now)", "", true, nil)
+	tracker.Display()
+	created, err := ask.LineWithTracker(tracker, "Created RFC3339 (optional, empty = now)", "", true, nil)
 	if err != nil {
 		return nil, err
 	}
 	if created == "" {
 		created = nowRFC3339()
+		tracker.UpdateLastField(created)
 	}
 
 	var defaults *pl.Defaults
-	ok, err := ask.Confirm("Configure playlist defaults (display/license/duration)?", false)
+	tracker.Display()
+	ok, err := ask.ConfirmWithTracker(tracker, "Configure playlist defaults (display/license/duration)?", false)
 	if err != nil {
 		return nil, err
 	}
 	if ok {
 		defaults = &pl.Defaults{}
 
-		ok2, err := ask.Confirm("Set defaults.display?", false)
+		tracker.Display()
+		ok2, err := ask.ConfirmWithTracker(tracker, "Set defaults.display?", false)
 		if err != nil {
 			return nil, err
 		}
 		if ok2 {
-			disp, err := promptDisplayPrefs()
+			disp, err := promptDisplayPrefs(tracker)
 			if err != nil {
 				return nil, err
 			}
 			defaults.Display = disp
 		}
 
-		defLic, err := ask.Line(`Defaults license ('open'|'closed') (optional)`, "", true, func(s string) error {
+		tracker.Display()
+		defLic, err := ask.LineWithTracker(tracker, `Defaults license ('open'|'closed') (optional)`, "", true, func(s string) error {
 			s = strings.TrimSpace(s)
 			if s == "" {
 				return nil
@@ -87,7 +99,8 @@ func Playlist() (*pl.Playlist, error) {
 			defaults.License = defLic
 		}
 
-		dur, err := ask.FloatEmptyOK("Default duration seconds")
+		tracker.Display()
+		dur, err := ask.FloatEmptyOKWithTracker(tracker, "Default duration seconds")
 		if err != nil {
 			return nil, err
 		}
@@ -97,7 +110,7 @@ func Playlist() (*pl.Playlist, error) {
 		}
 	}
 
-	items, err := promptPlaylistItems()
+	items, err := promptPlaylistItems(tracker)
 	if err != nil {
 		return nil, err
 	}
@@ -114,8 +127,9 @@ func Playlist() (*pl.Playlist, error) {
 	return p, nil
 }
 
-func promptPlaylistItems() ([]pl.PlaylistItem, error) {
+func promptPlaylistItems(tracker *ask.FieldTracker) ([]pl.PlaylistItem, error) {
 	var items []pl.PlaylistItem
+	itemNum := 1
 	for {
 		label := `Item artwork "source" URI`
 		var allowEmpty bool
@@ -123,7 +137,8 @@ func promptPlaylistItems() ([]pl.PlaylistItem, error) {
 			allowEmpty = true
 			label += " ; leave empty to finish items"
 		}
-		source, err := ask.Line(label, "", allowEmpty, func(s string) error {
+		tracker.Display()
+		source, err := ask.LineWithTracker(tracker, fmt.Sprintf("[Item %d] %s", itemNum, label), "", allowEmpty, func(s string) error {
 			if strings.TrimSpace(s) == "" {
 				return nil
 			}
@@ -139,16 +154,19 @@ func promptPlaylistItems() ([]pl.PlaylistItem, error) {
 			break
 		}
 
-		itemTitle, err := ask.Line("Item title (optional)", "", true, nil)
+		tracker.Display()
+		itemTitle, err := ask.LineWithTracker(tracker, fmt.Sprintf("[Item %d] Title (optional)", itemNum), "", true, nil)
 		if err != nil {
 			return nil, err
 		}
 
-		itemIDHint, err := ask.Line("Item id UUID v4 (optional)", "", true, fields.UUIDv4EmptyOK)
+		tracker.Display()
+		itemIDHint, err := ask.LineWithTracker(tracker, fmt.Sprintf("[Item %d] id UUID v4 (optional)", itemNum), "", true, fields.UUIDv4EmptyOK)
 		if err != nil {
 			return nil, err
 		}
-		itemSlug, err := ask.Line("Item slug (optional)", "", true, fields.SlugEmptyOK)
+		tracker.Display()
+		itemSlug, err := ask.LineWithTracker(tracker, fmt.Sprintf("[Item %d] slug (optional)", itemNum), "", true, fields.SlugEmptyOK)
 		if err != nil {
 			return nil, err
 		}
@@ -162,17 +180,20 @@ func promptPlaylistItems() ([]pl.PlaylistItem, error) {
 			it.ID = strings.TrimSpace(itemIDHint)
 		} else if idN, err := uuid.NewV4(); err == nil {
 			it.ID = idN
+			tracker.UpdateLastField(idN)
 		} else {
 			return nil, err
 		}
 
-		duration, err := ask.FloatEmptyOK("Duration seconds")
+		tracker.Display()
+		duration, err := ask.FloatEmptyOKWithTracker(tracker, fmt.Sprintf("[Item %d] Duration seconds", itemNum))
 		if err != nil {
 			return nil, err
 		}
 		it.Duration = duration
 
-		license, err := ask.Line(`Item license ('open'|'closed') (optional)`, "", true, func(s string) error {
+		tracker.Display()
+		license, err := ask.LineWithTracker(tracker, fmt.Sprintf(`[Item %d] license ('open'|'closed') (optional)`, itemNum), "", true, func(s string) error {
 			s = strings.TrimSpace(s)
 			if s == "" {
 				return nil
@@ -189,7 +210,8 @@ func promptPlaylistItems() ([]pl.PlaylistItem, error) {
 			it.License = license
 		}
 
-		ref, err := ask.Line("Metadata ref URI (optional)", "", true, fields.URIEmptyOK)
+		tracker.Display()
+		ref, err := ask.LineWithTracker(tracker, fmt.Sprintf("[Item %d] Metadata ref URI (optional)", itemNum), "", true, fields.URIEmptyOK)
 		if err != nil {
 			return nil, err
 		}
@@ -197,43 +219,47 @@ func promptPlaylistItems() ([]pl.PlaylistItem, error) {
 			it.Ref = ref
 		}
 
-		ad, err := ask.Confirm("Configure item.display?", false)
+		tracker.Display()
+		ad, err := ask.ConfirmWithTracker(tracker, fmt.Sprintf("[Item %d] Configure item.display?", itemNum), false)
 		if err != nil {
 			return nil, err
 		}
 		if ad {
-			disp, err := promptDisplayPrefs()
+			disp, err := promptDisplayPrefs(tracker)
 			if err != nil {
 				return nil, err
 			}
 			it.Display = disp
 		}
 
-		rb, err := ask.Confirm("Configure item.repro?", false)
+		tracker.Display()
+		rb, err := ask.ConfirmWithTracker(tracker, fmt.Sprintf("[Item %d] Configure item.repro?", itemNum), false)
 		if err != nil {
 			return nil, err
 		}
 		if rb {
-			r, err := promptReproBlock()
+			r, err := promptReproBlock(tracker)
 			if err != nil {
 				return nil, err
 			}
 			it.Repro = r
 		}
 
-		pb, err := ask.Confirm("Configure item.provenance?", false)
+		tracker.Display()
+		pb, err := ask.ConfirmWithTracker(tracker, fmt.Sprintf("[Item %d] Configure item.provenance?", itemNum), false)
 		if err != nil {
 			return nil, err
 		}
 		if pb {
-			p, err := promptProvenance()
+			p, err := promptProvenance(tracker)
 			if err != nil {
 				return nil, err
 			}
 			it.Provenance = p
 		}
 
-		ovRaw, err := ask.Line(`Item "override" raw JSON object (optional)`, "", true, func(s string) error {
+		tracker.Display()
+		ovRaw, err := ask.LineWithTracker(tracker, fmt.Sprintf(`[Item %d] "override" raw JSON object (optional)`, itemNum), "", true, func(s string) error {
 			if strings.TrimSpace(s) == "" {
 				return nil
 			}
@@ -248,17 +274,20 @@ func promptPlaylistItems() ([]pl.PlaylistItem, error) {
 		}
 
 		items = append(items, it)
+		itemNum++
 	}
 	return items, nil
 }
 
-func promptDisplayPrefs() (*pl.DisplayPrefs, error) {
-	_, scaling, err := ask.Select(`display.scaling`,
+func promptDisplayPrefs(tracker *ask.FieldTracker) (*pl.DisplayPrefs, error) {
+	tracker.Display()
+	_, scaling, err := ask.SelectWithTracker(tracker, `display.scaling`,
 		[]string{"fit", "fill", "stretch", "auto"})
 	if err != nil {
 		return nil, err
 	}
-	bg, err := ask.Line("display.background (#RRGGBB or transparent) [optional, default #000000]", "", true,
+	tracker.Display()
+	bg, err := ask.LineWithTracker(tracker, "display.background (#RRGGBB or transparent) [optional, default #000000]", "", true,
 		func(s string) error {
 			s = strings.TrimSpace(s)
 			if s == "" {
@@ -272,15 +301,18 @@ func promptDisplayPrefs() (*pl.DisplayPrefs, error) {
 	if err != nil {
 		return nil, err
 	}
-	autoplayYes, err := ask.Confirm(`display.autoplay default true`, true)
+	tracker.Display()
+	autoplayYes, err := ask.ConfirmWithTracker(tracker, `display.autoplay default true`, true)
 	if err != nil {
 		return nil, err
 	}
-	loopYes, err := ask.Confirm(`display.loop default true`, true)
+	tracker.Display()
+	loopYes, err := ask.ConfirmWithTracker(tracker, `display.loop default true`, true)
 	if err != nil {
 		return nil, err
 	}
-	iYes, err := ask.Confirm("Configure display.interaction (keyboard/mouse)?", false)
+	tracker.Display()
+	iYes, err := ask.ConfirmWithTracker(tracker, "Configure display.interaction (keyboard/mouse)?", false)
 	if err != nil {
 		return nil, err
 	}
@@ -298,23 +330,28 @@ func promptDisplayPrefs() (*pl.DisplayPrefs, error) {
 	d.Loop = &l
 
 	if iYes {
-		rawKeys, err := ask.Line(`Interaction keyboard codes (comma-separated, optional)`, "", true, nil)
+		tracker.Display()
+		rawKeys, err := ask.LineWithTracker(tracker, `Interaction keyboard codes (comma-separated, optional)`, "", true, nil)
 		if err != nil {
 			return nil, err
 		}
-		mp, err := ask.Confirm("Enable mouse.click?", false)
+		tracker.Display()
+		mp, err := ask.ConfirmWithTracker(tracker, "Enable mouse.click?", false)
 		if err != nil {
 			return nil, err
 		}
-		ms, err := ask.Confirm("Enable mouse.scroll?", false)
+		tracker.Display()
+		ms, err := ask.ConfirmWithTracker(tracker, "Enable mouse.scroll?", false)
 		if err != nil {
 			return nil, err
 		}
-		md, err := ask.Confirm("Enable mouse.drag?", false)
+		tracker.Display()
+		md, err := ask.ConfirmWithTracker(tracker, "Enable mouse.drag?", false)
 		if err != nil {
 			return nil, err
 		}
-		mh, err := ask.Confirm("Enable mouse.hover?", false)
+		tracker.Display()
+		mh, err := ask.ConfirmWithTracker(tracker, "Enable mouse.hover?", false)
 		if err != nil {
 			return nil, err
 		}
@@ -327,16 +364,18 @@ func promptDisplayPrefs() (*pl.DisplayPrefs, error) {
 	return d, nil
 }
 
-func promptReproBlock() (*pl.ReproBlock, error) {
+func promptReproBlock(tracker *ask.FieldTracker) (*pl.ReproBlock, error) {
 	r := &pl.ReproBlock{}
-	chromium, err := ask.Line(`repro.engineVersion.chromium version (optional)`, "", true, nil)
+	tracker.Display()
+	chromium, err := ask.LineWithTracker(tracker, `repro.engineVersion.chromium version (optional)`, "", true, nil)
 	if err != nil {
 		return nil, err
 	}
 	if chromium != "" {
 		r.EngineVersion = map[string]string{"chromium": chromium}
 	}
-	r.Seed, err = ask.Line("repro.seed (hex 0x… , optional)", "", true, func(s string) error {
+	tracker.Display()
+	r.Seed, err = ask.LineWithTracker(tracker, "repro.seed (hex 0x… , optional)", "", true, func(s string) error {
 		if strings.TrimSpace(s) == "" {
 			return nil
 		}
@@ -348,7 +387,8 @@ func promptReproBlock() (*pl.ReproBlock, error) {
 	if err != nil {
 		return nil, err
 	}
-	hashLine, err := ask.Line(`repro.assetsSHA256 hashes (comma-separated 64-char hex each, optional)`, "", true, nil)
+	tracker.Display()
+	hashLine, err := ask.LineWithTracker(tracker, `repro.assetsSHA256 hashes (comma-separated 64-char hex each, optional)`, "", true, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -360,7 +400,8 @@ func promptReproBlock() (*pl.ReproBlock, error) {
 			r.AssetsSHA256 = append(r.AssetsSHA256, p)
 		}
 	}
-	fhSha, err := ask.Line(`repro.frameHash.sha256 (optional 64-char hex)`, "", true, func(s string) error {
+	tracker.Display()
+	fhSha, err := ask.LineWithTracker(tracker, `repro.frameHash.sha256 (optional 64-char hex)`, "", true, func(s string) error {
 		if strings.TrimSpace(s) == "" {
 			return nil
 		}
@@ -372,7 +413,8 @@ func promptReproBlock() (*pl.ReproBlock, error) {
 	if err != nil {
 		return nil, err
 	}
-	ph, err := ask.Line(`repro.frameHash.phash (optional 0x hex)`, "", true, func(s string) error {
+	tracker.Display()
+	ph, err := ask.LineWithTracker(tracker, `repro.frameHash.phash (optional 0x hex)`, "", true, func(s string) error {
 		if strings.TrimSpace(s) == "" {
 			return nil
 		}
@@ -400,8 +442,9 @@ func promptReproBlock() (*pl.ReproBlock, error) {
 	return r, nil
 }
 
-func promptProvenance() (*pl.ProvenanceBlock, error) {
-	_, t, err := ask.Select("provenance.type", []string{
+func promptProvenance(tracker *ask.FieldTracker) (*pl.ProvenanceBlock, error) {
+	tracker.Display()
+	_, t, err := ask.SelectWithTracker(tracker, "provenance.type", []string{
 		string(pl.ProvenanceOnChain),
 		string(pl.ProvenanceSeriesRegistry),
 		string(pl.ProvenanceOffChainURI),
@@ -415,7 +458,8 @@ func promptProvenance() (*pl.ProvenanceBlock, error) {
 
 	if needContract {
 		c := &pl.ProvenanceContract{}
-		ch, err := ask.Line(`contract.chain (evm|tezos|bitmark|other)`, "", false, func(s string) error {
+		tracker.Display()
+		ch, err := ask.LineWithTracker(tracker, `contract.chain (evm|tezos|bitmark|other)`, "", false, func(s string) error {
 			switch strings.TrimSpace(s) {
 			case "evm", "tezos", "bitmark", "other":
 				return nil
@@ -427,7 +471,8 @@ func promptProvenance() (*pl.ProvenanceBlock, error) {
 			return nil, err
 		}
 		c.Chain = ch
-		st, err := ask.Line(`contract.standard (erc721|erc1155|fa2|other)`, "", true, func(s string) error {
+		tracker.Display()
+		st, err := ask.LineWithTracker(tracker, `contract.standard (erc721|erc1155|fa2|other)`, "", true, func(s string) error {
 			switch strings.TrimSpace(s) {
 			case "", "erc721", "erc1155", "fa2", "other":
 				return nil
@@ -439,25 +484,30 @@ func promptProvenance() (*pl.ProvenanceBlock, error) {
 			return nil, err
 		}
 		c.Standard = st
-		c.Address, err = ask.Line("contract.address (optional)", "", true, nil)
+		tracker.Display()
+		c.Address, err = ask.LineWithTracker(tracker, "contract.address (optional)", "", true, nil)
 		if err != nil {
 			return nil, err
 		}
-		if si, err := ask.IntEmptyOK("contract.seriesId integer (optional)"); err != nil {
+		tracker.Display()
+		if si, err := ask.IntEmptyOKWithTracker(tracker, "contract.seriesId integer (optional)"); err != nil {
 			return nil, err
 		} else if si != nil {
 			c.SeriesID = si
 		}
-		c.TokenID, err = ask.Line("contract.tokenId (optional)", "", true, nil)
+		tracker.Display()
+		c.TokenID, err = ask.LineWithTracker(tracker, "contract.tokenId (optional)", "", true, nil)
 		if err != nil {
 			return nil, err
 		}
-		u, err := ask.Line(`contract.uri (optional)`, "", true, fields.URIEmptyOK)
+		tracker.Display()
+		u, err := ask.LineWithTracker(tracker, `contract.uri (optional)`, "", true, fields.URIEmptyOK)
 		if err != nil {
 			return nil, err
 		}
 		c.URI = u
-		meta, err := ask.Line("contract.metaHash (optional)", "", true, nil)
+		tracker.Display()
+		meta, err := ask.LineWithTracker(tracker, "contract.metaHash (optional)", "", true, nil)
 		if err != nil {
 			return nil, err
 		}
@@ -465,13 +515,16 @@ func promptProvenance() (*pl.ProvenanceBlock, error) {
 		p.Contract = c
 	}
 
-	depsDone, err := ask.Confirm("Add provenance.dependencies entries?", false)
+	tracker.Display()
+	depsDone, err := ask.ConfirmWithTracker(tracker, "Add provenance.dependencies entries?", false)
 	if err != nil {
 		return nil, err
 	}
 	if depsDone {
+		depNum := 1
 		for {
-			dchain, err := ask.Line(`dep.chain (leave empty when done)`, "", true, func(s string) error {
+			tracker.Display()
+			dchain, err := ask.LineWithTracker(tracker, fmt.Sprintf(`[Dependency %d] chain (leave empty when done)`, depNum), "", true, func(s string) error {
 				if strings.TrimSpace(s) == "" {
 					return nil
 				}
@@ -488,7 +541,8 @@ func promptProvenance() (*pl.ProvenanceBlock, error) {
 			if strings.TrimSpace(dchain) == "" {
 				break
 			}
-			std, err := ask.Line(`dep.standard`, "", false, func(s string) error {
+			tracker.Display()
+			std, err := ask.LineWithTracker(tracker, fmt.Sprintf(`[Dependency %d] standard`, depNum), "", false, func(s string) error {
 				switch strings.TrimSpace(s) {
 				case "erc721", "erc1155", "fa2", "other":
 					return nil
@@ -499,7 +553,8 @@ func promptProvenance() (*pl.ProvenanceBlock, error) {
 			if err != nil {
 				return nil, err
 			}
-			du, err := ask.Line(`dep.uri`, "", false, fields.URI)
+			tracker.Display()
+			du, err := ask.LineWithTracker(tracker, fmt.Sprintf(`[Dependency %d] uri`, depNum), "", false, fields.URI)
 			if err != nil {
 				return nil, err
 			}
@@ -508,6 +563,7 @@ func promptProvenance() (*pl.ProvenanceBlock, error) {
 				Standard: std,
 				URI:      du,
 			})
+			depNum++
 		}
 	}
 

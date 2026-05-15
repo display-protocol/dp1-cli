@@ -25,16 +25,19 @@ func ensurePlaylistURIs(rows []string) ([]string, error) {
 	return rows, nil
 }
 
-func promptEntity(scope string) (identity.Entity, error) {
-	name, err := ask.Line(scope+" entity name", "", false, nonEmpty())
+func promptEntityWithTracker(tracker *ask.FieldTracker, scope string) (identity.Entity, error) {
+	tracker.Display()
+	name, err := ask.LineWithTracker(tracker, scope+" entity name", "", false, nonEmpty())
 	if err != nil {
 		return identity.Entity{}, err
 	}
-	key, err := ask.Line(scope+" entity key did:… ", "", false, fields.DID)
+	tracker.Display()
+	key, err := ask.LineWithTracker(tracker, scope+" entity key did:… ", "", false, fields.DID)
 	if err != nil {
 		return identity.Entity{}, err
 	}
-	url, err := ask.Line(scope+" entity url (optional)", "", true, fields.URIEmptyOK)
+	tracker.Display()
+	url, err := ask.LineWithTracker(tracker, scope+" entity url (optional)", "", true, fields.URIEmptyOK)
 	if err != nil {
 		return identity.Entity{}, err
 	}
@@ -42,15 +45,20 @@ func promptEntity(scope string) (identity.Entity, error) {
 	return ent, nil
 }
 
-func promptPlaylistURIs(prompt string) ([]string, error) {
+func promptPlaylistURIsWithTracker(tracker *ask.FieldTracker, prompt string) ([]string, error) {
 	var rows []string
+	uriNum := 1
 	for {
 		l := `"` + prompt + `" (URI)`
 		addEmpty := len(rows) > 0
 		if addEmpty {
 			l += "; leave empty when done"
 		}
-		s, err := ask.Line(l, "", addEmpty, func(x string) error {
+		if uriNum > 1 {
+			l = fmt.Sprintf("[URI %d] %s", uriNum, l)
+		}
+		tracker.Display()
+		s, err := ask.LineWithTracker(tracker, l, "", addEmpty, func(x string) error {
 			if strings.TrimSpace(x) == "" && addEmpty {
 				return nil
 			}
@@ -63,6 +71,7 @@ func promptPlaylistURIs(prompt string) ([]string, error) {
 			break
 		}
 		rows = append(rows, strings.TrimSpace(s))
+		uriNum++
 	}
 	return ensurePlaylistURIs(rows)
 }

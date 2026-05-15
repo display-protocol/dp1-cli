@@ -25,7 +25,10 @@ func validateChannelSummary(s string) error {
 
 // Channel prompts for a DP-1 channel document (without signatures — run `channel sign`).
 func Channel() (*ch.Channel, error) {
-	idHint, err := ask.Line("Channel id UUID v4 (optional)", "", true, fields.UUIDv4EmptyOK)
+	tracker := ask.NewFieldTracker()
+
+	tracker.Display()
+	idHint, err := ask.LineWithTracker(tracker, "Channel id UUID v4 (optional)", "", true, fields.UUIDv4EmptyOK)
 	if err != nil {
 		return nil, err
 	}
@@ -35,71 +38,83 @@ func Channel() (*ch.Channel, error) {
 		if err != nil {
 			return nil, err
 		}
+		tracker.UpdateLastField(id)
 	}
 
-	slug, err := ask.Line("Slug (required, lowercase hyphenated)", "", false, fields.Slug)
+	tracker.Display()
+	slug, err := ask.LineWithTracker(tracker, "Slug (required, lowercase hyphenated)", "", false, fields.Slug)
 	if err != nil {
 		return nil, err
 	}
 
-	title, err := ask.Line("Title", "", false, nonEmpty())
+	tracker.Display()
+	title, err := ask.LineWithTracker(tracker, "Title", "", false, nonEmpty())
 	if err != nil {
 		return nil, err
 	}
 
-	version, err := ask.Line("Extension version semver", "0.1.0", false, fields.SemVer)
+	tracker.Display()
+	version, err := ask.LineWithTracker(tracker, "Extension version semver", "0.1.0", false, fields.SemVer)
 	if err != nil {
 		return nil, err
 	}
 
-	created, err := ask.Line("Created RFC3339 (optional)", "", true, nil)
+	tracker.Display()
+	created, err := ask.LineWithTracker(tracker, "Created RFC3339 (optional)", "", true, nil)
 	if err != nil {
 		return nil, err
 	}
 	if strings.TrimSpace(created) == "" {
 		created = nowRFC3339()
+		tracker.UpdateLastField(created)
 	}
 
-	plURIs, err := promptPlaylistURIs("Channel playlist URIs")
+	plURIs, err := promptPlaylistURIsWithTracker(tracker, "Channel playlist URIs")
 	if err != nil {
 		return nil, err
 	}
 
 	var curators []identity.Entity
+	curatorNum := 1
 	for {
-		add, err := ask.Confirm("Add a curator entity?", false)
+		tracker.Display()
+		add, err := ask.ConfirmWithTracker(tracker, "Add a curator entity?", false)
 		if err != nil {
 			return nil, err
 		}
 		if !add {
 			break
 		}
-		ent, err := promptEntity(`Curator`)
+		ent, err := promptEntityWithTracker(tracker, fmt.Sprintf(`Curator %d`, curatorNum))
 		if err != nil {
 			return nil, err
 		}
 		curators = append(curators, ent)
+		curatorNum++
 	}
 
-	pubYes, err := ask.Confirm("Set publisher identity?", false)
+	tracker.Display()
+	pubYes, err := ask.ConfirmWithTracker(tracker, "Set publisher identity?", false)
 	if err != nil {
 		return nil, err
 	}
 	var pub *identity.Entity
 	if pubYes {
-		ent, err := promptEntity("Publisher")
+		ent, err := promptEntityWithTracker(tracker, "Publisher")
 		if err != nil {
 			return nil, err
 		}
 		pub = &ent
 	}
 
-	sum, err := ask.Line(`Summary text (optional, 1–2000 chars if set)`, "", true, validateChannelSummary)
+	tracker.Display()
+	sum, err := ask.LineWithTracker(tracker, `Summary text (optional, 1–2000 chars if set)`, "", true, validateChannelSummary)
 	if err != nil {
 		return nil, err
 	}
 
-	cover, err := ask.Line("coverImage URI (optional)", "", true, fields.URIEmptyOK)
+	tracker.Display()
+	cover, err := ask.LineWithTracker(tracker, "coverImage URI (optional)", "", true, fields.URIEmptyOK)
 	if err != nil {
 		return nil, err
 	}

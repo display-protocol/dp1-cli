@@ -12,7 +12,10 @@ import (
 
 // Group prompts for a playlist-group document (without signatures — run `group sign`).
 func Group() (*playlistgroup.Group, error) {
-	idHint, err := ask.Line("Group id UUID v4 (optional)", "", true, fields.UUIDv4EmptyOK)
+	tracker := ask.NewFieldTracker()
+
+	tracker.Display()
+	idHint, err := ask.LineWithTracker(tracker, "Group id UUID v4 (optional)", "", true, fields.UUIDv4EmptyOK)
 	if err != nil {
 		return nil, err
 	}
@@ -22,42 +25,50 @@ func Group() (*playlistgroup.Group, error) {
 		if err != nil {
 			return nil, err
 		}
+		tracker.UpdateLastField(id)
 	}
 
-	title, err := ask.Line("Title", "", false, nonEmpty())
+	tracker.Display()
+	title, err := ask.LineWithTracker(tracker, "Title", "", false, nonEmpty())
 	if err != nil {
 		return nil, err
 	}
 
-	slug, err := ask.Line("Slug (optional)", "", true, fields.SlugEmptyOK)
+	tracker.Display()
+	slug, err := ask.LineWithTracker(tracker, "Slug (optional)", "", true, fields.SlugEmptyOK)
 	if err != nil {
 		return nil, err
 	}
 
-	curator, err := ask.Line("Curator name (optional)", "", true, nil)
+	tracker.Display()
+	curator, err := ask.LineWithTracker(tracker, "Curator name (optional)", "", true, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	sum, err := ask.Line("Summary (optional)", "", true, nil)
+	tracker.Display()
+	sum, err := ask.LineWithTracker(tracker, "Summary (optional)", "", true, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	created, err := ask.Line("Created RFC3339 (optional)", "", true, nil)
+	tracker.Display()
+	created, err := ask.LineWithTracker(tracker, "Created RFC3339 (optional)", "", true, nil)
 	if err != nil {
 		return nil, err
 	}
 	if strings.TrimSpace(created) == "" {
 		created = nowRFC3339()
+		tracker.UpdateLastField(created)
 	}
 
-	plURIs, err := promptPlaylistURIs("Playlist URIs in this group")
+	plURIs, err := promptPlaylistURIsWithTracker(tracker, "Playlist URIs in this group")
 	if err != nil {
 		return nil, err
 	}
 
-	cover, err := ask.Line("coverImage URI (optional)", "", true, fields.URIEmptyOK)
+	tracker.Display()
+	cover, err := ask.LineWithTracker(tracker, "coverImage URI (optional)", "", true, fields.URIEmptyOK)
 	if err != nil {
 		return nil, err
 	}
