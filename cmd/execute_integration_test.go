@@ -65,6 +65,44 @@ func TestExecute_configPath_JSON(t *testing.T) {
 	}
 }
 
+func TestExecute_configShow_JSON(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+	defer resetCLIState(t)
+	root := cmd.Root
+	var buf bytes.Buffer
+	root.SetOut(&buf)
+	root.SetErr(io.Discard)
+	root.SetArgs([]string{"--json", "config", "show"})
+	t.Cleanup(func() {
+		root.SetArgs(nil)
+		resetCLIState(t)
+	})
+	if err := root.Execute(); err != nil {
+		t.Fatal(err)
+	}
+	var got struct {
+		OK   bool `json:"ok"`
+		Feed struct {
+			URL string `json:"url"`
+		} `json:"feed"`
+		Defaults struct {
+			OutputFormat string `json:"output_format"`
+		} `json:"defaults"`
+	}
+	if err := json.Unmarshal(buf.Bytes(), &got); err != nil {
+		t.Fatalf("stdout %q: %v", buf.String(), err)
+	}
+	if !got.OK {
+		t.Fatalf("ok: %v", got.OK)
+	}
+	if got.Feed.URL != "https://feed.feralfile.com" {
+		t.Fatalf("feed.url: %q", got.Feed.URL)
+	}
+	if got.Defaults.OutputFormat != "human" {
+		t.Fatalf("defaults.output_format: %q", got.Defaults.OutputFormat)
+	}
+}
+
 func TestExecute_versionJSONShape(t *testing.T) {
 	defer resetCLIState(t)
 	root := cmd.Root

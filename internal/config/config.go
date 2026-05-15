@@ -17,17 +17,17 @@ type Config struct {
 }
 
 type SigningCfg struct {
-	PrivateKey string `yaml:"private_key,omitempty"`
-	PublicKey  string `yaml:"public_key,omitempty"`
+	PrivateKey string `yaml:"private_key,omitempty" json:"private_key,omitempty"`
+	PublicKey  string `yaml:"public_key,omitempty" json:"public_key,omitempty"`
 }
 
 type FeedCfg struct {
-	URL    string `yaml:"url,omitempty"`
-	APIKey string `yaml:"api_key,omitempty"`
+	URL    string `yaml:"url,omitempty" json:"url,omitempty"`
+	APIKey string `yaml:"api_key,omitempty" json:"api_key,omitempty"`
 }
 
 type DefaultsCfg struct {
-	OutputFormat string `yaml:"output_format,omitempty"`
+	OutputFormat string `yaml:"output_format,omitempty" json:"output_format,omitempty"`
 }
 
 var cached struct {

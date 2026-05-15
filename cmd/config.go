@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"strings"
@@ -45,6 +46,16 @@ var configShowCmd = &cobra.Command{
 		if err != nil {
 			output.PrintError(jsonOut, output.ErrorReport{Command: "config show", Error: err.Error()})
 			return errPrinted
+		}
+		if jsonOut {
+			enc := json.NewEncoder(cmd.OutOrStdout())
+			enc.SetIndent("", "  ")
+			return enc.Encode(output.ConfigShowOK{
+				OK:       true,
+				Signing:  cfg.Signing,
+				Feed:     cfg.Feed,
+				Defaults: cfg.Defaults,
+			})
 		}
 		raw, err := yaml.Marshal(cfg)
 		if err != nil {

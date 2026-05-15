@@ -7,6 +7,8 @@ import (
 	"os"
 
 	"github.com/fatih/color"
+
+	"github.com/display-protocol/dp1-cli/internal/config"
 )
 
 type ValidateOK struct {
@@ -41,6 +43,14 @@ type PublishOK struct {
 	Feed       string          `json:"feed"`
 	StatusCode int             `json:"statusCode"`
 	Response   json.RawMessage `json:"response,omitempty"`
+}
+
+// ConfigShowOK is emitted for `dp1 config show --json` (merged defaults included).
+type ConfigShowOK struct {
+	OK       bool               `json:"ok"`
+	Signing  config.SigningCfg  `json:"signing"`
+	Feed     config.FeedCfg     `json:"feed"`
+	Defaults config.DefaultsCfg `json:"defaults"`
 }
 
 func PrintValidateSuccess(jsonOut bool, v ValidateOK) {

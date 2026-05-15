@@ -21,7 +21,7 @@
 - **Initialization:** `dp1 init` creates `~/.dp1` and writes the default file if missing.
 - **Keys writable via `dp1 config set`:**  
   `signing.private_key`, `signing.public_key`, `feed.url`, `feed.api_key`, `defaults.output_format` (`human` or `json`).
-- **View merged config:** `dp1 config show` (defaults applied for missing fields).
+- **View merged config:** `dp1 config show` (defaults applied for missing fields). Human mode prints YAML; **`--json`** emits **`ConfigShowOK`** (see JSON shapes).
 
 ---
 
@@ -118,6 +118,7 @@ Types are defined in `internal/output`:
 - **`ValidateOK`:** `ok`, `resource`, optional `dpVersion` / `version`, `id`, `title`.
 - **`VerifyOK`:** `ok`, `resource`, optional `mode`, `message`, `pubkeyMatch`.
 - **`PublishOK`:** `ok`, `resource`, `feed`, `statusCode`, `response` (raw JSON from server).
+- **`ConfigShowOK`:** `ok`, `signing` (`private_key`, `public_key`), `feed` (`url`, `api_key`), `defaults` (`output_format`) — merged view, same keys as `config.yaml`.
 - **`ErrorReport`:** `ok: false`, `command`, `error` (and optional `resource` when set by callers).
 
 ---
