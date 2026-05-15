@@ -13,7 +13,9 @@ import (
 )
 
 // AppendEd25519 signs orig (same bytes hashing expects), preserves unknown JSON keys,
-// appends to "signatures", strips legacy "signature", and runs validate on the result.
+// updates "signatures", strips legacy "signature", and runs validate on the result.
+// If "signatures" already contains an entry with the same kid and role as the new
+// signature, that entry is replaced so each (kid, role) appears at most once.
 func AppendEd25519(orig []byte, priv ed25519.PrivateKey, role, tsRFC3339 string, validate func([]byte) error) ([]byte, error) {
 	var m map[string]json.RawMessage
 	if err := json.Unmarshal(orig, &m); err != nil {
@@ -39,8 +41,17 @@ func AppendEd25519(orig []byte, priv ed25519.PrivateKey, role, tsRFC3339 string,
 			return nil, fmt.Errorf("decode signatures: %w", err)
 		}
 	}
-	existing = append(existing, newSig)
-	signed, err := json.Marshal(existing)
+	// One logical slot per (kid, role): re-signing replaces an older signature for that pair
+	// instead of appending a duplicate chain entry.
+	merged := make([]playlist.Signature, 0, len(existing)+1)
+	for _, s := range existing {
+		if signatureSameSignerSlot(s, newSig) {
+			continue
+		}
+		merged = append(merged, s)
+	}
+	merged = append(merged, newSig)
+	signed, err := json.Marshal(merged)
 	if err != nil {
 		return nil, err
 	}
@@ -64,6 +75,13 @@ func AppendEd25519(orig []byte, priv ed25519.PrivateKey, role, tsRFC3339 string,
 		}
 	}
 	return newLine, nil
+}
+
+func signatureSameSignerSlot(a, b playlist.Signature) bool {
+	if a.Kid != b.Kid {
+		return false
+	}
+	return strings.EqualFold(strings.TrimSpace(a.Role), strings.TrimSpace(b.Role))
 }
 
 // ValidatePlaylist wires [dp1.ParseAndValidatePlaylist].

@@ -87,7 +87,7 @@ Unsupported URL schemes are rejected explicitly.
 
 ### `sign <file>`
 
-- Appends one **v1.1+** multi-signature using dp1-go signing helpers (`internal/jsonsign`), preserving unknown top-level fields.
+- Adds or updates one **v1.1+** multi-signature using dp1-go signing helpers (`internal/jsonsign`), preserving unknown top-level fields. If **`signatures`** already contains an entry with the same **`kid`** and **`role`** (after trimming surrounding whitespace; **`role`** compared case-insensitively), that entry is **replaced** by the new signature so each **`kid`/`role` pair is unique**—re-signing refreshes the slot instead of duplicating it.
 - **`--private-key`:** hex key; else **`DP1_PRIVATE_KEY`**; else **`signing.private_key`** in config.
 - **`--role`:** valid roles include `curator`, `feed`, `agent`, `institution`, `licensor`, and (for channels) `publisher`. Defaults: **`playlist sign`** and **`group sign`** default to **`curator`**; **`channel sign`** defaults to **`publisher`**.
 - **`--ts`:** RFC3339 timestamp (default: now).

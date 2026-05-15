@@ -30,7 +30,7 @@ Operator → dp1-cli → dp1-go (validate / sign / verify)
 | **Feed client** | `internal/feed` | Credentials resolution; `POST` to `/api/v1/{resource}`; parse API error JSON. |
 | **Input** | `internal/input` | JSON from file, URL, stdin, base64. |
 | **Output** | `internal/output` | Human vs `--json` success and error shapes. |
-| **Signing** | `internal/jsonsign`, `internal/signkey` | Append signatures; resolve private key (flag → env → config). |
+| **Signing** | `internal/jsonsign`, `internal/signkey` | Add or refresh signatures (same kid/role replaces); resolve private key (flag → env → config). |
 | **Verification** | `internal/verify` | Signature verification after validation. |
 | **Interactive create** | `internal/create`, `internal/ask`, `internal/fields` | Guided drafts. |
 | **Identifiers** | `internal/uuid` | IDs for drafts. |

@@ -153,6 +153,73 @@ func TestAppendEd25519_appendsSecondSignature(t *testing.T) {
 	}
 }
 
+func TestAppendEd25519_replacesSameKidAndRole(t *testing.T) {
+	unsigned := []byte(`{
+  "dpVersion": "1.1.0",
+  "title": "fixture",
+  "items": [{"source": "https://example.invalid/art.json"}]
+}`)
+	_, priv, err := ed25519.GenerateKey(rand.Reader)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	firstTS := "2026-05-01T12:00:00Z"
+	secondTS := "2026-05-01T13:00:00Z"
+	once, err := jsonsign.AppendEd25519(unsigned, priv, pl.RoleCurator, firstTS, jsonsign.ValidatePlaylist)
+	if err != nil {
+		t.Fatal(err)
+	}
+	twice, err := jsonsign.AppendEd25519(once, priv, pl.RoleCurator, secondTS, jsonsign.ValidatePlaylist)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var env struct {
+		Sigs []pl.Signature `json:"signatures"`
+	}
+	if err := json.Unmarshal(twice, &env); err != nil {
+		t.Fatal(err)
+	}
+	if len(env.Sigs) != 1 {
+		t.Fatalf("want 1 signature after replace, got %d", len(env.Sigs))
+	}
+	if env.Sigs[0].Ts != secondTS {
+		t.Fatalf("want replaced ts %q, got %q", secondTS, env.Sigs[0].Ts)
+	}
+	if env.Sigs[0].Role != pl.RoleCurator {
+		t.Fatalf("role: %+v", env.Sigs[0])
+	}
+}
+
+func TestAppendEd25519_sameKidDifferentRolesKeepsBoth(t *testing.T) {
+	unsigned := []byte(`{
+  "dpVersion": "1.1.0",
+  "title": "fixture",
+  "items": [{"source": "https://example.invalid/art.json"}]
+}`)
+	_, priv, err := ed25519.GenerateKey(rand.Reader)
+	if err != nil {
+		t.Fatal(err)
+	}
+	once, err := jsonsign.AppendEd25519(unsigned, priv, pl.RoleCurator, "2026-05-01T12:00:00Z", jsonsign.ValidatePlaylist)
+	if err != nil {
+		t.Fatal(err)
+	}
+	twice, err := jsonsign.AppendEd25519(once, priv, pl.RoleFeed, "2026-05-01T12:01:00Z", jsonsign.ValidatePlaylist)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var env struct {
+		Sigs []pl.Signature `json:"signatures"`
+	}
+	if err := json.Unmarshal(twice, &env); err != nil {
+		t.Fatal(err)
+	}
+	if len(env.Sigs) != 2 {
+		t.Fatalf("want 2 signatures, got %d", len(env.Sigs))
+	}
+}
+
 func TestAppendEd25519_channelMinimal(t *testing.T) {
 	unsigned := []byte(`{
   "id": "11111111-1111-4111-8111-111111111111",

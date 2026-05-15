@@ -20,7 +20,7 @@ Operator → dp1-cli → dp1-go (validate / sign / verify)
 | **Feed client** | `internal/feed` | Minimal HTTP client: resolve credentials, `POST /api/v1/{playlists,playlist-groups,channels}`, map error bodies. |
 | **Input** | `internal/input` | Load JSON from file path, `http(s)` URL (GET uses bounded timeout and honors command cancellation), stdin (`-`), or inline base64. |
 | **Output** | `internal/output` | Human-readable vs machine JSON for success and error reporting. |
-| **Signing helpers** | `internal/jsonsign`, `internal/signkey` | Append multi-signatures while preserving unknown fields; resolve private key (flag → env → config). |
+| **Signing helpers** | `internal/jsonsign`, `internal/signkey` | Add or refresh multi-signatures (same **kid**/**role** replaces an existing entry); preserve unknown fields; resolve private key (flag → env → config). |
 | **Verification** | `internal/verify` | Signature checks after schema validation (v1.1+ multi-sig and legacy paths). |
 | **Interactive create** | `internal/create`, `internal/ask`, `internal/fields` | Guided drafts and field validation for `create` subcommands. |
 | **Identifiers** | `internal/uuid` | UUID generation where the CLI assigns new document ids in drafts. |
@@ -71,7 +71,7 @@ dp1 playlist validate <source>
 
 ```text
 dp1 playlist sign playlist.json
-  → jsonsign (append signature; preserve unknown fields)
+  → jsonsign (add signature; same kid/role replaces prior entry; preserve unknown fields)
 dp1 playlist verify playlist.json
   → ParseAndValidate + verify.Run
 ```
