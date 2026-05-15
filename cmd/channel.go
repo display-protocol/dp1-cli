@@ -8,7 +8,7 @@ import (
 	"time"
 
 	dp1 "github.com/display-protocol/dp1-go"
-	pl "github.com/display-protocol/dp1-go/playlist"
+	dp1ch "github.com/display-protocol/dp1-go/extension/channels"
 	"github.com/display-protocol/dp1-go/sign"
 	"github.com/spf13/cobra"
 
@@ -68,7 +68,7 @@ func init() {
 
 	channelCreateCmd.Flags().StringVarP(&channelCreateOut, "output", "o", "", "Write draft JSON here (empty or - for stdout)")
 	channelSignCmd.Flags().StringVar(&channelSignPriv, "private-key", "", "Hex Ed25519 private key (instead of DP1_PRIVATE_KEY / config)")
-	channelSignCmd.Flags().StringVar(&channelSignRole, "role", pl.RoleCurator, "Signature role: curator, feed, agent, institution, licensor")
+	channelSignCmd.Flags().StringVar(&channelSignRole, "role", dp1ch.RolePublisher, "Signature role: publisher (default), curator, feed, agent, institution, licensor")
 	channelSignCmd.Flags().StringVar(&channelSignTS, "ts", "", "RFC3339 timestamp (default: now)")
 	channelSignCmd.Flags().StringVarP(&channelSignOutput, "output", "o", "", "Write signed JSON here (default: overwrite input; - stdout)")
 

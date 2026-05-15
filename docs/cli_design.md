@@ -89,7 +89,7 @@ Unsupported URL schemes are rejected explicitly.
 
 - Appends one **v1.1+** multi-signature using dp1-go signing helpers (`internal/jsonsign`), preserving unknown top-level fields.
 - **`--private-key`:** hex key; else **`DP1_PRIVATE_KEY`**; else **`signing.private_key`** in config.
-- **`--role`:** `curator`, `feed`, `agent`, `institution`, or `licensor` (playlist/group/channel commands).
+- **`--role`:** valid roles include `curator`, `feed`, `agent`, `institution`, `licensor`, and (for channels) `publisher`. Defaults: **`playlist sign`** and **`group sign`** default to **`curator`**; **`channel sign`** defaults to **`publisher`**.
 - **`--ts`:** RFC3339 timestamp (default: now).
 - **`--output` / `-o`:** write signed doc (default: overwrite `<file>`; `-` for stdout).
 

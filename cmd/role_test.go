@@ -3,6 +3,7 @@ package cmd
 import (
 	"testing"
 
+	dp1ch "github.com/display-protocol/dp1-go/extension/channels"
 	pl "github.com/display-protocol/dp1-go/playlist"
 )
 
@@ -13,6 +14,7 @@ func TestParseMultiSigRole_valid(t *testing.T) {
 		{"Agent", pl.RoleAgent},
 		{pl.RoleInstitution, pl.RoleInstitution},
 		{"LICENSOR", pl.RoleLicensor},
+		{"publisher", dp1ch.RolePublisher},
 	}
 	for _, c := range cases {
 		got, err := parseMultiSigRole(c.in)
@@ -26,7 +28,7 @@ func TestParseMultiSigRole_valid(t *testing.T) {
 }
 
 func TestParseMultiSigRole_invalid(t *testing.T) {
-	for _, in := range []string{"", "owner", "publisher"} {
+	for _, in := range []string{"", "owner"} {
 		if _, err := parseMultiSigRole(in); err == nil {
 			t.Fatalf("expected error for %q", in)
 		}
