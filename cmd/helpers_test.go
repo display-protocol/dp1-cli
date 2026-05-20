@@ -67,6 +67,9 @@ func resetCLIState(t *testing.T) {
 		}
 		_ = c.Flags().Set("allow-unsigned", "false")
 	}
+	if c := lookupCmd(root, "key", "generate"); c != nil {
+		_ = c.Flags().Set("save-config", "false")
+	}
 	for _, path := range [][]string{{"playlist", "sign"}, {"channel", "sign"}, {"group", "sign"}} {
 		c := lookupCmd(root, path...)
 		if c == nil {
