@@ -56,7 +56,6 @@ func init() {
 	keyCmd.AddCommand(keyGenerateCmd)
 	keyCmd.AddCommand(keyImportCmd)
 	keyCmd.AddCommand(keyShowCmd)
-	Root.AddCommand(keyCmd)
 }
 
 func runKeyGenerate(cmd *cobra.Command, args []string) error {
@@ -73,14 +72,7 @@ func runKeyGenerate(cmd *cobra.Command, args []string) error {
 	}
 
 	hexExpanded := hex.EncodeToString(priv)
-	if jsonOut {
-		fmt.Fprintf(cmd.OutOrStdout(), `{"ok":true,"public_did_key":%q,"public_hex":%q,"private_key_hex_expanded":%q}`+"\n",
-			did, hex.EncodeToString(pub), hexExpanded)
-	} else {
-		fmt.Fprintf(cmd.OutOrStdout(), "public kid (did:key): %s\n", did)
-		fmt.Fprintf(cmd.OutOrStdout(), "public hex: %s\n", hex.EncodeToString(pub))
-		fmt.Fprintf(cmd.OutOrStdout(), "private key hex (128 chars, KEEP SECRET): %s\n", hexExpanded)
-	}
+	pubHex := hex.EncodeToString(pub)
 
 	if keyGenerateSave {
 		cfg, err := config.Load()
@@ -89,14 +81,30 @@ func runKeyGenerate(cmd *cobra.Command, args []string) error {
 			return errPrinted
 		}
 		cfg.Signing.PrivateKey = hexExpanded
-		cfg.Signing.PublicKey = hex.EncodeToString(pub)
+		cfg.Signing.PublicKey = pubHex
 		if err := config.Save(cfg); err != nil {
 			output.PrintError(jsonOut, output.ErrorReport{Command: "key generate", Error: err.Error()})
 			return errPrinted
 		}
-		if !jsonOut {
+		// Config is the delivery channel for the private key; stdout is public material only.
+		if jsonOut {
+			fmt.Fprintf(cmd.OutOrStdout(), `{"ok":true,"public_did_key":%q,"public_hex":%q,"saved":true}`+"\n",
+				did, pubHex)
+		} else {
+			fmt.Fprintf(cmd.OutOrStdout(), "public kid (did:key): %s\n", did)
+			fmt.Fprintf(cmd.OutOrStdout(), "public hex: %s\n", pubHex)
 			fmt.Fprintln(cmd.OutOrStdout(), "saved signing.private_key to ~/.dp1/config.yaml")
 		}
+		return nil
+	}
+
+	if jsonOut {
+		fmt.Fprintf(cmd.OutOrStdout(), `{"ok":true,"public_did_key":%q,"public_hex":%q,"private_key_hex_expanded":%q}`+"\n",
+			did, pubHex, hexExpanded)
+	} else {
+		fmt.Fprintf(cmd.OutOrStdout(), "public kid (did:key): %s\n", did)
+		fmt.Fprintf(cmd.OutOrStdout(), "public hex: %s\n", pubHex)
+		fmt.Fprintf(cmd.OutOrStdout(), "private key hex (128 chars, KEEP SECRET): %s\n", hexExpanded)
 	}
 	return nil
 }

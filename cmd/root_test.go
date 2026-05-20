@@ -12,10 +12,19 @@ func TestRoot_cliSurface(t *testing.T) {
 		t.Fatalf("root name: got %q", root.Name())
 	}
 	names := childNames(root)
-	required := []string{"channel", "group", "playlist", "version"}
+	required := []string{"channel", "config", "group", "init", "key", "playlist", "version"}
 	for _, want := range required {
 		if !stringInSlice(names, want) {
 			t.Fatalf("missing top-level command %q, have %v", want, names)
+		}
+	}
+	seen := make(map[string]int)
+	for _, n := range names {
+		seen[n]++
+	}
+	for name, count := range seen {
+		if count != 1 {
+			t.Fatalf("top-level command %q registered %d times, have %v", name, count, names)
 		}
 	}
 

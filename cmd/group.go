@@ -84,17 +84,12 @@ func runGroupValidate(cmd *cobra.Command, args []string) error {
 		output.PrintError(jsonOut, output.ErrorReport{Command: "group validate", Error: err.Error()})
 		return errPrinted
 	}
-	g, err := dp1.ParseAndValidatePlaylistGroup(data)
+	out, err := validateGroup(data, validateAllowUnsigned)
 	if err != nil {
 		output.PrintError(jsonOut, output.ErrorReport{Command: "group validate", Error: err.Error()})
 		return errPrinted
 	}
-	output.PrintValidateSuccess(jsonOut, output.ValidateOK{
-		Resource:  "playlist-group",
-		DPVersion: "",
-		ID:        g.ID,
-		Title:     g.Title,
-	})
+	output.PrintValidateSuccess(jsonOut, out)
 	return nil
 }
 

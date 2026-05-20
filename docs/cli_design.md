@@ -59,7 +59,7 @@ Unsupported URL schemes are rejected explicitly.
 | `dp1 version` | Print dp1-cli, dp1-go, and Go versions (`--json` supported). |
 | `dp1 init` | Create config dir and default `config.yaml` if missing. |
 | `dp1 config …` | `path`, `show`, `get KEY`, `set KEY VALUE` (VALUE may be `-` for stdin line). |
-| `dp1 key …` | `generate`, `import`, `show` (Ed25519 for DP-1 multi-signatures). |
+| `dp1 key …` | `generate`, `import`, `show` (Ed25519 for DP-1 multi-signatures). See **Key commands** below. |
 | `dp1 playlist …` | `validate`, `verify`, `create`, `sign`, `publish` |
 | `dp1 group …` | `validate`, `verify`, `create`, `sign`, `publish` |
 | `dp1 channel …` | `validate`, `verify`, `create`, `sign`, `publish` |
@@ -71,8 +71,9 @@ Unsupported URL schemes are rejected explicitly.
 ### `validate <source>`
 
 - Runs the appropriate **`dp1.ParseAndValidate*`** for the resource.
-- Human success: short summary with id/title/version fields when present.
-- JSON success: see **`ValidateOK`** in `internal/output` (`ok: true`).
+- **`--allow-unsigned`:** when schema validation fails **only** because `signatures` / legacy `signature` are missing or `signatures` is an empty array, treat the document as a valid **unsigned draft** (decode fields for output; does not verify cryptographic signatures). Any other schema error still fails. Use after **`create`** and before **`sign`**; **`publish`** and **`verify`** still require a fully valid signed document.
+- Human success: short summary with id/title/version fields when present; unsigned drafts include a note to run **`sign`** next.
+- JSON success: see **`ValidateOK`** in `internal/output` (`ok: true`; `unsignedDraft: true` when `--allow-unsigned` accepted a signature-only failure).
 
 ### `verify <source>`
 
@@ -111,11 +112,26 @@ Feeds that return another 2xx for create may not be recognized as success by thi
 
 ---
 
+## Key commands
+
+### `key generate`
+
+- Creates a new Ed25519 key pair.
+- **`--save-config`:** writes `signing.private_key` and `signing.public_key` to `~/.dp1/config.yaml`. **Does not print the private key** to stdout (human or `--json`); only public `did:key`, public hex, and a save confirmation. Use this for the usual post-`init` setup.
+- Without **`--save-config`:** prints the private key hex so the operator can copy it elsewhere (`private_key_hex_expanded` in `--json`).
+
+### `key import` / `key show`
+
+- **`import`:** stores a private key in config; stdout shows public `did:key` only.
+- **`show`:** prints public material from flag, env, or config (never secrets).
+
+---
+
 ## JSON output shapes (stable for scripting)
 
 Types are defined in `internal/output`:
 
-- **`ValidateOK`:** `ok`, `resource`, optional `dpVersion` / `version`, `id`, `title`.
+- **`ValidateOK`:** `ok`, `resource`, optional `dpVersion` / `version`, `id`, `title`, `unsignedDraft`, `message`.
 - **`VerifyOK`:** `ok`, `resource`, optional `mode`, `message`, `pubkeyMatch`.
 - **`PublishOK`:** `ok`, `resource`, `feed`, `statusCode`, `response` (raw JSON from server).
 - **`ConfigShowOK`:** `ok`, `signing` (`private_key`, `public_key`), `feed` (`url`, `api_key`), `defaults` (`output_format`) — merged view, same keys as `config.yaml`.

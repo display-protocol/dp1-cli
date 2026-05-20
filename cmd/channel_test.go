@@ -49,3 +49,33 @@ func TestChannel_validate_hasNoPubkeyFlag(t *testing.T) {
 		t.Fatal("channel validate should not define local --pubkey")
 	}
 }
+
+func TestChannel_validate_hasAllowUnsignedFlag(t *testing.T) {
+	c := mustFindCmd(t, cmd.Root, "channel", "validate")
+	fl := c.Flags().Lookup("allow-unsigned")
+	if fl == nil {
+		t.Fatal("expected --allow-unsigned on channel validate")
+	}
+	if fl.DefValue != "false" {
+		t.Fatalf("allow-unsigned default should be false, got %q", fl.DefValue)
+	}
+}
+
+func TestChannel_createSignSurface(t *testing.T) {
+	_ = mustFindCmd(t, cmd.Root, "channel", "create")
+	s := mustFindCmd(t, cmd.Root, "channel", "sign")
+	if s.Flag("output") == nil {
+		t.Fatal("expected --output on channel sign")
+	}
+	fl := s.Flags().Lookup("role")
+	if fl == nil {
+		t.Fatal("expected --role on channel sign")
+	}
+	if fl.DefValue != "publisher" {
+		t.Fatalf("channel sign --role default: got %q, want publisher", fl.DefValue)
+	}
+}
+
+func TestChannel_publish_registered(t *testing.T) {
+	_ = mustFindCmd(t, cmd.Root, "channel", "publish")
+}

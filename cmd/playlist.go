@@ -84,16 +84,10 @@ func runPlaylistValidate(cmd *cobra.Command, args []string) error {
 		output.PrintError(jsonOut, output.ErrorReport{Command: "playlist validate", Error: err.Error()})
 		return errPrinted
 	}
-	p, err := dp1.ParseAndValidatePlaylist(data)
+	out, err := validatePlaylist(data, validateAllowUnsigned)
 	if err != nil {
 		output.PrintError(jsonOut, output.ErrorReport{Command: "playlist validate", Error: err.Error()})
 		return errPrinted
-	}
-	out := output.ValidateOK{
-		Resource:  "playlist",
-		DPVersion: p.DPVersion,
-		ID:        p.ID,
-		Title:     p.Title,
 	}
 	output.PrintValidateSuccess(jsonOut, out)
 	return nil

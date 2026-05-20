@@ -50,6 +50,17 @@ func TestPlaylist_validate_hasNoPubkeyFlag(t *testing.T) {
 	}
 }
 
+func TestPlaylist_validate_hasAllowUnsignedFlag(t *testing.T) {
+	c := mustFindCmd(t, cmd.Root, "playlist", "validate")
+	fl := c.Flags().Lookup("allow-unsigned")
+	if fl == nil {
+		t.Fatal("expected --allow-unsigned on playlist validate")
+	}
+	if fl.DefValue != "false" {
+		t.Fatalf("allow-unsigned default should be false, got %q", fl.DefValue)
+	}
+}
+
 func TestPlaylist_createAndSign_registered(t *testing.T) {
 	_ = mustFindCmd(t, cmd.Root, "playlist", "create")
 	s := mustFindCmd(t, cmd.Root, "playlist", "sign")

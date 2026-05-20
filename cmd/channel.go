@@ -84,17 +84,12 @@ func runChannelValidate(cmd *cobra.Command, args []string) error {
 		output.PrintError(jsonOut, output.ErrorReport{Command: "channel validate", Error: err.Error()})
 		return errPrinted
 	}
-	ch, err := dp1.ParseAndValidateChannel(data)
+	out, err := validateChannel(data, validateAllowUnsigned)
 	if err != nil {
 		output.PrintError(jsonOut, output.ErrorReport{Command: "channel validate", Error: err.Error()})
 		return errPrinted
 	}
-	output.PrintValidateSuccess(jsonOut, output.ValidateOK{
-		Resource: "channel",
-		Version:  ch.Version,
-		ID:       ch.ID,
-		Title:    ch.Title,
-	})
+	output.PrintValidateSuccess(jsonOut, out)
 	return nil
 }
 

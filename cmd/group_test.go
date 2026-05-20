@@ -49,3 +49,33 @@ func TestGroup_validate_hasNoPubkeyFlag(t *testing.T) {
 		t.Fatal("group validate should not define local --pubkey")
 	}
 }
+
+func TestGroup_validate_hasAllowUnsignedFlag(t *testing.T) {
+	c := mustFindCmd(t, cmd.Root, "group", "validate")
+	fl := c.Flags().Lookup("allow-unsigned")
+	if fl == nil {
+		t.Fatal("expected --allow-unsigned on group validate")
+	}
+	if fl.DefValue != "false" {
+		t.Fatalf("allow-unsigned default should be false, got %q", fl.DefValue)
+	}
+}
+
+func TestGroup_createSignSurface(t *testing.T) {
+	_ = mustFindCmd(t, cmd.Root, "group", "create")
+	s := mustFindCmd(t, cmd.Root, "group", "sign")
+	if s.Flag("output") == nil {
+		t.Fatal("expected --output on group sign")
+	}
+	fl := s.Flags().Lookup("role")
+	if fl == nil {
+		t.Fatal("expected --role on group sign")
+	}
+	if fl.DefValue != "curator" {
+		t.Fatalf("group sign --role default: got %q, want curator", fl.DefValue)
+	}
+}
+
+func TestGroup_publish_registered(t *testing.T) {
+	_ = mustFindCmd(t, cmd.Root, "group", "publish")
+}

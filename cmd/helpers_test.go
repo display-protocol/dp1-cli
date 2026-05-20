@@ -1,7 +1,9 @@
 package cmd_test
 
 import (
+	"bytes"
 	"io"
+	"os"
 	"testing"
 
 	"github.com/spf13/cobra"
@@ -9,6 +11,28 @@ import (
 	"github.com/display-protocol/dp1-cli/cmd"
 	"github.com/display-protocol/dp1-cli/internal/config"
 )
+
+// captureStdout redirects process stdout for the duration of fn (used when output uses os.Stdout).
+func captureStdout(t *testing.T, fn func()) string {
+	t.Helper()
+	r, w, err := os.Pipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+	old := os.Stdout
+	os.Stdout = w
+	defer func() { os.Stdout = old }()
+	fn()
+	if err := w.Close(); err != nil {
+		t.Fatal(err)
+	}
+	var buf bytes.Buffer
+	if _, err := io.Copy(&buf, r); err != nil {
+		t.Fatal(err)
+	}
+	_ = r.Close()
+	return buf.String()
+}
 
 func lookupCmd(root *cobra.Command, path ...string) *cobra.Command {
 	cur := root
@@ -36,6 +60,16 @@ func resetCLIState(t *testing.T) {
 	if err := root.PersistentFlags().Set("json", "false"); err != nil {
 		t.Fatal(err)
 	}
+	for _, path := range [][]string{{"playlist", "validate"}, {"channel", "validate"}, {"group", "validate"}} {
+		c := lookupCmd(root, path...)
+		if c == nil {
+			continue
+		}
+		_ = c.Flags().Set("allow-unsigned", "false")
+	}
+	if c := lookupCmd(root, "key", "generate"); c != nil {
+		_ = c.Flags().Set("save-config", "false")
+	}
 	for _, path := range [][]string{{"playlist", "sign"}, {"channel", "sign"}, {"group", "sign"}} {
 		c := lookupCmd(root, path...)
 		if c == nil {
@@ -45,8 +79,8 @@ func resetCLIState(t *testing.T) {
 		for _, name := range []string{"private-key", "output", "ts"} {
 			_ = fl.Set(name, "")
 		}
-		if fl.Lookup("role") != nil {
-			_ = fl.Set("role", "curator")
+		if rfl := fl.Lookup("role"); rfl != nil {
+			_ = fl.Set("role", rfl.DefValue)
 		}
 	}
 	for _, path := range [][]string{{"playlist", "verify"}, {"channel", "verify"}, {"group", "verify"}} {

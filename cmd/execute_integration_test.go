@@ -128,6 +128,41 @@ func TestExecute_versionJSONShape(t *testing.T) {
 	}
 }
 
+func TestExecute_playlistValidate_unsignedAllowedWithFlag(t *testing.T) {
+	dir := t.TempDir()
+	raw := []byte(`{"dpVersion":"1.1.0","title":"x","items":[{"source":"https://example.invalid/i.json"}]}`)
+	path := filepath.Join(dir, "unsigned.json")
+	if err := os.WriteFile(path, raw, 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	defer resetCLIState(t)
+	root := cmd.Root
+	root.SetOut(io.Discard)
+	root.SetErr(io.Discard)
+	root.SetArgs([]string{"--json", "playlist", "validate", path, "--allow-unsigned"})
+	t.Cleanup(func() {
+		root.SetArgs(nil)
+		resetCLIState(t)
+	})
+	stdout := captureStdout(t, func() {
+		if err := root.Execute(); err != nil {
+			t.Fatal(err)
+		}
+	})
+	var env struct {
+		OK            bool   `json:"ok"`
+		UnsignedDraft bool   `json:"unsignedDraft"`
+		Message       string `json:"message"`
+	}
+	if err := json.Unmarshal([]byte(stdout), &env); err != nil {
+		t.Fatalf("stdout %q: %v", stdout, err)
+	}
+	if !env.OK || !env.UnsignedDraft || env.Message == "" {
+		t.Fatalf("got %#v, want ok with unsignedDraft", env)
+	}
+}
+
 func TestExecute_playlistValidate_unsignedFailsSchema(t *testing.T) {
 	dir := t.TempDir()
 	raw := []byte(`{"dpVersion":"1.1.0","title":"x","items":[{"source":"https://example.invalid/i.json"}]}`)
@@ -189,6 +224,63 @@ func TestExecute_playlistSignProducesValidSignedDoc(t *testing.T) {
 	root.SetArgs([]string{"playlist", "verify", outPath})
 	if err := root.Execute(); err != nil {
 		t.Fatalf("verify signed: %v", err)
+	}
+}
+
+func TestExecute_channelSign_defaultPublisherRoleProducesValidDoc(t *testing.T) {
+	dir := t.TempDir()
+	raw := []byte(`{
+  "id": "11111111-1111-4111-8111-111111111111",
+  "slug": "fixture-channel",
+  "title": "Fixture",
+  "version": "0.1.0",
+  "created": "2026-05-01T12:00:00Z",
+  "playlists": ["https://example.invalid/playlist.json"]
+}`)
+	inPath := filepath.Join(dir, "in.json")
+	outPath := filepath.Join(dir, "out.json")
+	if err := os.WriteFile(inPath, raw, 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	_, priv, err := ed25519.GenerateKey(rand.Reader)
+	if err != nil {
+		t.Fatal(err)
+	}
+	keyHex := hex.EncodeToString(priv)
+
+	defer resetCLIState(t)
+	root := cmd.Root
+	root.SetOut(io.Discard)
+	root.SetErr(io.Discard)
+	// No --role: default publisher must pass channels schema (dp1-go v0.4.0+).
+	root.SetArgs([]string{"channel", "sign", inPath, "--private-key", keyHex, "-o", outPath})
+	t.Cleanup(func() {
+		root.SetArgs(nil)
+		resetCLIState(t)
+	})
+	if err := root.Execute(); err != nil {
+		t.Fatal(err)
+	}
+
+	signed, err := os.ReadFile(outPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := dp1.ParseAndValidateChannel(signed); err != nil {
+		t.Fatalf("signed channel invalid (default publisher role): %v", err)
+	}
+
+	var env struct {
+		Sigs []struct {
+			Role string `json:"role"`
+		} `json:"signatures"`
+	}
+	if err := json.Unmarshal(signed, &env); err != nil {
+		t.Fatal(err)
+	}
+	if len(env.Sigs) != 1 || env.Sigs[0].Role != "publisher" {
+		t.Fatalf("signatures: got %#v, want one entry with role publisher", env.Sigs)
 	}
 }
 
