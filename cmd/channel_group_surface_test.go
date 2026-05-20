@@ -12,6 +12,13 @@ func TestChannel_createSignSurface(t *testing.T) {
 	if s.Flag("output") == nil {
 		t.Fatal("expected --output on channel sign")
 	}
+	fl := s.Flags().Lookup("role")
+	if fl == nil {
+		t.Fatal("expected --role on channel sign")
+	}
+	if fl.DefValue != "publisher" {
+		t.Fatalf("channel sign --role default: got %q, want publisher", fl.DefValue)
+	}
 }
 
 func TestGroup_createSignSurface(t *testing.T) {

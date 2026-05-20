@@ -3,7 +3,7 @@ module github.com/display-protocol/dp1-cli
 go 1.24.0
 
 require (
-	github.com/display-protocol/dp1-go v0.3.0
+	github.com/display-protocol/dp1-go v0.4.0
 	github.com/ethereum/go-ethereum v1.17.2
 	github.com/fatih/color v1.18.0
 	github.com/manifoldco/promptui v0.9.0

@@ -45,8 +45,8 @@ func resetCLIState(t *testing.T) {
 		for _, name := range []string{"private-key", "output", "ts"} {
 			_ = fl.Set(name, "")
 		}
-		if fl.Lookup("role") != nil {
-			_ = fl.Set("role", "curator")
+		if rfl := fl.Lookup("role"); rfl != nil {
+			_ = fl.Set("role", rfl.DefValue)
 		}
 	}
 	for _, path := range [][]string{{"playlist", "verify"}, {"channel", "verify"}, {"group", "verify"}} {
