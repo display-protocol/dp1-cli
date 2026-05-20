@@ -56,7 +56,6 @@ func init() {
 	keyCmd.AddCommand(keyGenerateCmd)
 	keyCmd.AddCommand(keyImportCmd)
 	keyCmd.AddCommand(keyShowCmd)
-	Root.AddCommand(keyCmd)
 }
 
 func runKeyGenerate(cmd *cobra.Command, args []string) error {

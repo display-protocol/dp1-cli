@@ -57,7 +57,3 @@ var initSetupCmd = &cobra.Command{
 		return nil
 	},
 }
-
-func init() {
-	Root.AddCommand(initSetupCmd)
-}
