@@ -71,8 +71,9 @@ Unsupported URL schemes are rejected explicitly.
 ### `validate <source>`
 
 - Runs the appropriate **`dp1.ParseAndValidate*`** for the resource.
-- Human success: short summary with id/title/version fields when present.
-- JSON success: see **`ValidateOK`** in `internal/output` (`ok: true`).
+- **`--allow-unsigned`:** when schema validation fails **only** because `signatures` / legacy `signature` are missing or `signatures` is an empty array, treat the document as a valid **unsigned draft** (decode fields for output; does not verify cryptographic signatures). Any other schema error still fails. Use after **`create`** and before **`sign`**; **`publish`** and **`verify`** still require a fully valid signed document.
+- Human success: short summary with id/title/version fields when present; unsigned drafts include a note to run **`sign`** next.
+- JSON success: see **`ValidateOK`** in `internal/output` (`ok: true`; `unsignedDraft: true` when `--allow-unsigned` accepted a signature-only failure).
 
 ### `verify <source>`
 
@@ -115,7 +116,7 @@ Feeds that return another 2xx for create may not be recognized as success by thi
 
 Types are defined in `internal/output`:
 
-- **`ValidateOK`:** `ok`, `resource`, optional `dpVersion` / `version`, `id`, `title`.
+- **`ValidateOK`:** `ok`, `resource`, optional `dpVersion` / `version`, `id`, `title`, `unsignedDraft`, `message`.
 - **`VerifyOK`:** `ok`, `resource`, optional `mode`, `message`, `pubkeyMatch`.
 - **`PublishOK`:** `ok`, `resource`, `feed`, `statusCode`, `response` (raw JSON from server).
 - **`ConfigShowOK`:** `ok`, `signing` (`private_key`, `public_key`), `feed` (`url`, `api_key`), `defaults` (`output_format`) — merged view, same keys as `config.yaml`.

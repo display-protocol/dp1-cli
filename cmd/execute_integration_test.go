@@ -128,6 +128,41 @@ func TestExecute_versionJSONShape(t *testing.T) {
 	}
 }
 
+func TestExecute_playlistValidate_unsignedAllowedWithFlag(t *testing.T) {
+	dir := t.TempDir()
+	raw := []byte(`{"dpVersion":"1.1.0","title":"x","items":[{"source":"https://example.invalid/i.json"}]}`)
+	path := filepath.Join(dir, "unsigned.json")
+	if err := os.WriteFile(path, raw, 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	defer resetCLIState(t)
+	root := cmd.Root
+	root.SetOut(io.Discard)
+	root.SetErr(io.Discard)
+	root.SetArgs([]string{"--json", "playlist", "validate", path, "--allow-unsigned"})
+	t.Cleanup(func() {
+		root.SetArgs(nil)
+		resetCLIState(t)
+	})
+	stdout := captureStdout(t, func() {
+		if err := root.Execute(); err != nil {
+			t.Fatal(err)
+		}
+	})
+	var env struct {
+		OK            bool   `json:"ok"`
+		UnsignedDraft bool   `json:"unsignedDraft"`
+		Message       string `json:"message"`
+	}
+	if err := json.Unmarshal([]byte(stdout), &env); err != nil {
+		t.Fatalf("stdout %q: %v", stdout, err)
+	}
+	if !env.OK || !env.UnsignedDraft || env.Message == "" {
+		t.Fatalf("got %#v, want ok with unsignedDraft", env)
+	}
+}
+
 func TestExecute_playlistValidate_unsignedFailsSchema(t *testing.T) {
 	dir := t.TempDir()
 	raw := []byte(`{"dpVersion":"1.1.0","title":"x","items":[{"source":"https://example.invalid/i.json"}]}`)

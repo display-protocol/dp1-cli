@@ -50,6 +50,17 @@ func TestGroup_validate_hasNoPubkeyFlag(t *testing.T) {
 	}
 }
 
+func TestGroup_validate_hasAllowUnsignedFlag(t *testing.T) {
+	c := mustFindCmd(t, cmd.Root, "group", "validate")
+	fl := c.Flags().Lookup("allow-unsigned")
+	if fl == nil {
+		t.Fatal("expected --allow-unsigned on group validate")
+	}
+	if fl.DefValue != "false" {
+		t.Fatalf("allow-unsigned default should be false, got %q", fl.DefValue)
+	}
+}
+
 func TestGroup_createSignSurface(t *testing.T) {
 	_ = mustFindCmd(t, cmd.Root, "group", "create")
 	s := mustFindCmd(t, cmd.Root, "group", "sign")

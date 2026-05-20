@@ -12,13 +12,14 @@ import (
 )
 
 type ValidateOK struct {
-	OK        bool   `json:"ok"`
-	Resource  string `json:"resource"`
-	DPVersion string `json:"dpVersion,omitempty"` // core playlist / document "dpVersion"
-	Version   string `json:"version,omitempty"`   // channels extension "version"
-	ID        string `json:"id,omitempty"`
-	Title     string `json:"title,omitempty"`
-	Message   string `json:"message,omitempty"`
+	OK            bool   `json:"ok"`
+	Resource      string `json:"resource"`
+	DPVersion     string `json:"dpVersion,omitempty"` // core playlist / document "dpVersion"
+	Version       string `json:"version,omitempty"`   // channels extension "version"
+	ID            string `json:"id,omitempty"`
+	Title         string `json:"title,omitempty"`
+	UnsignedDraft bool   `json:"unsignedDraft,omitempty"`
+	Message       string `json:"message,omitempty"`
 }
 
 type VerifyOK struct {
@@ -72,6 +73,9 @@ func PrintValidateSuccess(jsonOut bool, v ValidateOK) {
 	}
 	if v.Title != "" {
 		fmt.Fprintf(os.Stdout, "  title:     %s\n", v.Title)
+	}
+	if v.UnsignedDraft {
+		fmt.Fprintf(os.Stdout, "  note:      %s\n", v.Message)
 	}
 }
 

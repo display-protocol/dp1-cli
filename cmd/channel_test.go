@@ -50,6 +50,17 @@ func TestChannel_validate_hasNoPubkeyFlag(t *testing.T) {
 	}
 }
 
+func TestChannel_validate_hasAllowUnsignedFlag(t *testing.T) {
+	c := mustFindCmd(t, cmd.Root, "channel", "validate")
+	fl := c.Flags().Lookup("allow-unsigned")
+	if fl == nil {
+		t.Fatal("expected --allow-unsigned on channel validate")
+	}
+	if fl.DefValue != "false" {
+		t.Fatalf("allow-unsigned default should be false, got %q", fl.DefValue)
+	}
+}
+
 func TestChannel_createSignSurface(t *testing.T) {
 	_ = mustFindCmd(t, cmd.Root, "channel", "create")
 	s := mustFindCmd(t, cmd.Root, "channel", "sign")
