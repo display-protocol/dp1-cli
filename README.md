@@ -56,6 +56,7 @@ export DP1_FEED_API_KEY="your-api-key"
 
 ## Documentation
 
+- **[docs/quickstart.md](docs/quickstart.md)** — Minimal first run: validate a sample playlist end-to-end
 - **[docs/cli_design.md](docs/cli_design.md)** — Commands, flags, env vars, and JSON output
 - **[docs/architecture.md](docs/architecture.md)** — Package layout and design boundaries
 - **[docs/go_coding_standards.md](docs/go_coding_standards.md)** — Style and testing expectations
