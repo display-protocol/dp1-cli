@@ -10,8 +10,8 @@ import (
 	"github.com/display-protocol/dp1-go/playlistgroup"
 	"github.com/spf13/cobra"
 
-	"github.com/display-protocol/dp1-cli/internal/output"
-	"github.com/display-protocol/dp1-cli/internal/validateerr"
+	"github.com/display-protocol/dp1-cli/v2/internal/output"
+	"github.com/display-protocol/dp1-cli/v2/internal/validateerr"
 )
 
 // validateAllowUnsigned is bound on playlist, group, and channel validate subcommands.

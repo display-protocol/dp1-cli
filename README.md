@@ -19,11 +19,13 @@ From a clone:
 go build -o dp1 .
 ```
 
-Or install with a stable module version:
+Or install the latest release:
 
 ```bash
-go install github.com/display-protocol/dp1-cli@latest
+go install github.com/display-protocol/dp1-cli/v2@latest
 ```
+
+The `/v2` is required. The module carries the v2 major-version suffix, so the bare `github.com/display-protocol/dp1-cli@latest` resolves to the legacy v1.0.0 (dp1-validator) tag and fails.
 
 ## Quick start
 

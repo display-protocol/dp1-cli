@@ -8,8 +8,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/display-protocol/dp1-cli/cmd"
-	"github.com/display-protocol/dp1-cli/internal/config"
+	"github.com/display-protocol/dp1-cli/v2/cmd"
+	"github.com/display-protocol/dp1-cli/v2/internal/config"
 )
 
 // captureStdout redirects process stdout for the duration of fn (used when output uses os.Stdout).

@@ -12,12 +12,12 @@ import (
 	"github.com/display-protocol/dp1-go/sign"
 	"github.com/spf13/cobra"
 
-	"github.com/display-protocol/dp1-cli/internal/create"
-	"github.com/display-protocol/dp1-cli/internal/input"
-	"github.com/display-protocol/dp1-cli/internal/jsonsign"
-	"github.com/display-protocol/dp1-cli/internal/output"
-	"github.com/display-protocol/dp1-cli/internal/signkey"
-	"github.com/display-protocol/dp1-cli/internal/verify"
+	"github.com/display-protocol/dp1-cli/v2/internal/create"
+	"github.com/display-protocol/dp1-cli/v2/internal/input"
+	"github.com/display-protocol/dp1-cli/v2/internal/jsonsign"
+	"github.com/display-protocol/dp1-cli/v2/internal/output"
+	"github.com/display-protocol/dp1-cli/v2/internal/signkey"
+	"github.com/display-protocol/dp1-cli/v2/internal/verify"
 )
 
 var playlistVerifyPubkey string

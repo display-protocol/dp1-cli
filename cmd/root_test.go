@@ -3,7 +3,7 @@ package cmd_test
 import (
 	"testing"
 
-	"github.com/display-protocol/dp1-cli/cmd"
+	"github.com/display-protocol/dp1-cli/v2/cmd"
 )
 
 func TestRoot_cliSurface(t *testing.T) {

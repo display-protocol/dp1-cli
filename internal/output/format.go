@@ -8,7 +8,7 @@ import (
 
 	"github.com/fatih/color"
 
-	"github.com/display-protocol/dp1-cli/internal/config"
+	"github.com/display-protocol/dp1-cli/v2/internal/config"
 )
 
 type ValidateOK struct {

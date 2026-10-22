@@ -7,10 +7,10 @@ import (
 	dp1 "github.com/display-protocol/dp1-go"
 	"github.com/spf13/cobra"
 
-	"github.com/display-protocol/dp1-cli/internal/config"
-	"github.com/display-protocol/dp1-cli/internal/feed"
-	"github.com/display-protocol/dp1-cli/internal/input"
-	"github.com/display-protocol/dp1-cli/internal/output"
+	"github.com/display-protocol/dp1-cli/v2/internal/config"
+	"github.com/display-protocol/dp1-cli/v2/internal/feed"
+	"github.com/display-protocol/dp1-cli/v2/internal/input"
+	"github.com/display-protocol/dp1-cli/v2/internal/output"
 )
 
 var publishFeedURL string
