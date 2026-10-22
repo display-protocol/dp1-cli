@@ -10,6 +10,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// cliModulePath is this module's own path, as go.mod declares it. The
+// version lookup matches the build info's main module against it, so it must
+// carry the /v2 major-version suffix: without it every installed release
+// reports "(not in build)". TestCLIModulePathMatchesGoMod keeps the two in step.
+const cliModulePath = "github.com/display-protocol/dp1-cli/v2"
+
 var versionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "Print dp1-cli and dependency versions",
@@ -17,7 +23,7 @@ var versionCmd = &cobra.Command{
 }
 
 func runVersion(cmd *cobra.Command, args []string) error {
-	cli := moduleVersion("github.com/display-protocol/dp1-cli")
+	cli := moduleVersion(cliModulePath)
 	lib := moduleVersion("github.com/display-protocol/dp1-go")
 	out := cmd.OutOrStdout()
 	if jsonOut {
