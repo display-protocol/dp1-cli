@@ -16,7 +16,7 @@ This page shows a minimal first run with **dp1-cli**, the open-source command-li
 
 This quickstart follows **DP-1 core [v1.1.0](https://github.com/display-protocol/dp1/blob/main/core/v1.1.0/spec.md)** (`dpVersion: "1.1.0"`). In that version, each playlist item's `id` is a **UUID**, and a valid document has either a **`signatures[]`** block (recommended) or the legacy top-level **`signature`** field.
 
-The sample below uses a **`signatures[]`** object with **placeholder** `sig` and `payload_hash` values so you can run `validate` and see the shape. Those placeholders are not a real signed playlist: use **`dp1-cli playlist sign`** (or your own signer aligned with the spec) before **`verify`** or **publish**.
+The sample below uses a **`signatures[]`** object with **placeholder** `sig` and `payload_hash` values so you can run `validate` and see the shape. Those placeholders are not a real signed playlist, and **`dp1-cli playlist sign`** keeps signatures already in the file: delete the `signatures` array before you sign, or **`verify`** and **publish** fail.
 
 dp1-cli delegates validation and signature semantics to **dp1-go**. Other tools in your pipeline may still differ on `signatures[]` verification details — confirm behavior where it matters.
 
@@ -83,7 +83,7 @@ For signing and verification flows, see [`docs/cli_design.md`](cli_design.md).
 - Invalid item `id` for v1.1.0 (must be a **UUID**, not an arbitrary string).
 - Missing **`signatures`** and **`signature`** (the schema requires at least one).
 - Signature mismatch caused by payload changes after signing.
-- Placeholder **`sig`** / **`payload_hash`** pass structural validation but fail **`verify`** — replace them using **`playlist sign`** or an equivalent signer.
+- Placeholder **`sig`** / **`payload_hash`** pass structural validation but fail **`verify`** — delete the placeholder entry, then run **`playlist sign`**. `sign` replaces only an entry with the same `kid` and `role` as your key.
 
 ## Next step
 
