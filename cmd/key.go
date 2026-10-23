@@ -10,10 +10,10 @@ import (
 	"github.com/display-protocol/dp1-go/sign"
 	"github.com/spf13/cobra"
 
-	"github.com/display-protocol/dp1-cli/internal/ask"
-	"github.com/display-protocol/dp1-cli/internal/config"
-	"github.com/display-protocol/dp1-cli/internal/output"
-	"github.com/display-protocol/dp1-cli/internal/signkey"
+	"github.com/display-protocol/dp1-cli/v2/internal/ask"
+	"github.com/display-protocol/dp1-cli/v2/internal/config"
+	"github.com/display-protocol/dp1-cli/v2/internal/output"
+	"github.com/display-protocol/dp1-cli/v2/internal/signkey"
 )
 
 var keyCmd = &cobra.Command{

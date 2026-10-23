@@ -9,8 +9,8 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 
-	"github.com/display-protocol/dp1-cli/internal/config"
-	"github.com/display-protocol/dp1-cli/internal/output"
+	"github.com/display-protocol/dp1-cli/v2/internal/config"
+	"github.com/display-protocol/dp1-cli/v2/internal/output"
 )
 
 var configCmd = &cobra.Command{

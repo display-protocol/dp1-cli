@@ -9,8 +9,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/display-protocol/dp1-cli/cmd"
-	"github.com/display-protocol/dp1-cli/internal/config"
+	"github.com/display-protocol/dp1-cli/v2/cmd"
+	"github.com/display-protocol/dp1-cli/v2/internal/config"
 )
 
 func TestExecute_keyGenerate_saveConfig_doesNotPrintPrivateKey(t *testing.T) {

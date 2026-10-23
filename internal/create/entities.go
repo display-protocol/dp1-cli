@@ -6,8 +6,8 @@ import (
 
 	"github.com/display-protocol/dp1-go/extension/identity"
 
-	"github.com/display-protocol/dp1-cli/internal/ask"
-	"github.com/display-protocol/dp1-cli/internal/fields"
+	"github.com/display-protocol/dp1-cli/v2/internal/ask"
+	"github.com/display-protocol/dp1-cli/v2/internal/fields"
 )
 
 func buildEntity(name, key, url string) identity.Entity {

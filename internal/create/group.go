@@ -5,9 +5,9 @@ import (
 
 	"github.com/display-protocol/dp1-go/playlistgroup"
 
-	"github.com/display-protocol/dp1-cli/internal/ask"
-	"github.com/display-protocol/dp1-cli/internal/fields"
-	"github.com/display-protocol/dp1-cli/internal/uuid"
+	"github.com/display-protocol/dp1-cli/v2/internal/ask"
+	"github.com/display-protocol/dp1-cli/v2/internal/fields"
+	"github.com/display-protocol/dp1-cli/v2/internal/uuid"
 )
 
 // Group prompts for a playlist-group document (without signatures — run `group sign`).

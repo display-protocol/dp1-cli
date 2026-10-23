@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/display-protocol/dp1-cli/cmd"
+	"github.com/display-protocol/dp1-cli/v2/cmd"
 )
 
 func main() {

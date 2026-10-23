@@ -6,7 +6,7 @@ import (
 	"encoding/hex"
 	"testing"
 
-	"github.com/display-protocol/dp1-cli/internal/signkey"
+	"github.com/display-protocol/dp1-cli/v2/internal/signkey"
 )
 
 func TestParseHexPrivate_seed(t *testing.T) {

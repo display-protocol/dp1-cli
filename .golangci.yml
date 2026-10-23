@@ -11,7 +11,7 @@ formatters:
   settings:
     goimports:
       local-prefixes:
-        - github.com/display-protocol/dp1-cli
+        - github.com/display-protocol/dp1-cli/v2
 
 linters:
   default: none

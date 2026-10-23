@@ -63,11 +63,11 @@ See the [main README](../README.md) for install, config (`~/.dp1/config.yaml`), 
 **Step 2 — Install and validate** (requires [Go](https://go.dev/dl/) 1.24+):
 
 ```bash
-go install github.com/display-protocol/dp1-cli@latest
+go install github.com/display-protocol/dp1-cli/v2@latest
 dp1-cli playlist validate ./playlist.json
 ```
 
-`go install` places the binary on your `PATH` as **`dp1-cli`** (the module name). If you build from a clone with `go build -o dp1 .`, invoke **`dp1`** instead — the command tree is the same as documented in [`docs/cli_design.md`](cli_design.md).
+`go install` places the binary on your `PATH` as **`dp1-cli`** (the module name; Go drops the `/v2` major-version suffix). Keep the `/v2` in the install path: without it, `@latest` resolves to the legacy v1.0.0 dp1-validator tag and the install fails. If you build from a clone with `go build -o dp1 .`, invoke **`dp1`** instead — the command tree is the same as documented in [`docs/cli_design.md`](cli_design.md).
 
 Machine-readable output:
 

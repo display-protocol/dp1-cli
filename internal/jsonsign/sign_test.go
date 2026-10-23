@@ -10,7 +10,7 @@ import (
 	pl "github.com/display-protocol/dp1-go/playlist"
 	"github.com/display-protocol/dp1-go/sign"
 
-	"github.com/display-protocol/dp1-cli/internal/jsonsign"
+	"github.com/display-protocol/dp1-cli/v2/internal/jsonsign"
 )
 
 func TestAppendEd25519_playlistMinimal(t *testing.T) {

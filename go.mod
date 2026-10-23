@@ -1,4 +1,4 @@
-module github.com/display-protocol/dp1-cli
+module github.com/display-protocol/dp1-cli/v2
 
 go 1.24.0
 

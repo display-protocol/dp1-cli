@@ -15,7 +15,7 @@ import (
 
 	dp1 "github.com/display-protocol/dp1-go"
 
-	"github.com/display-protocol/dp1-cli/cmd"
+	"github.com/display-protocol/dp1-cli/v2/cmd"
 )
 
 func TestExecute_initWritesDefaultConfig(t *testing.T) {
