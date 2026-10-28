@@ -72,4 +72,4 @@ export DP1_FEED_URL="https://your-feed.example"
 
 ## License
 
-See the `LICENSE` file in this repository when present.
+Mozilla Public License 2.0. See [LICENSE](LICENSE).
